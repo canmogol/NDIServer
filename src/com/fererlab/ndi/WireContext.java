@@ -20,9 +20,14 @@ public class WireContext {
 
     @SuppressWarnings("unchecked")
     public <T extends Object> T getObject(Class<T> t) {
+        return getObject(t, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Object> T getObject(Class<T> t, boolean singleton) {
         try {
             String key = t.getPackage() + "." + t.getName();
-            if (context.containsKey(key)) {
+            if (singleton && context.containsKey(key)) {
                 return (T) context.get(key);
             } else if (!t.isInterface()) {
                 T instance = t.newInstance();
