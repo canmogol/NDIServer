@@ -55,10 +55,11 @@ public class WSAction extends BaseAction {
                     return Ok(request).add("data", wsResponse).toResponse();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    return Error(request, e.getMessage()).toResponse();
+                    return Error(request, "could not call method").exception(e).toResponse();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                return Error(request, "could not prepare service").exception(e).toResponse();
             }
         }
         return NotFound(request, "no method found").toResponse();
