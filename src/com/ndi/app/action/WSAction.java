@@ -6,6 +6,7 @@ import com.fererlab.dto.Response;
 import com.fererlab.ws.LogHandlerResolver;
 import com.fererlab.ws.LoggingHandler;
 import net.webservicex.CurrencyConvertor;
+import net.webservicex.CurrencyConvertorSoap;
 
 import javax.xml.ws.Binding;
 import javax.xml.ws.BindingProvider;
@@ -22,7 +23,7 @@ import java.util.Map;
 public class WSAction extends BaseAction {
 
     private Map<String, ServiceMethod> serviceMethodMap = new HashMap<String, ServiceMethod>();
-    private CurrencyConvertor currencyConvertor;
+    private CurrencyConvertorSoap currencyConvertorSoap;
 
     static {
         //for localhost testing only
@@ -41,8 +42,16 @@ public class WSAction extends BaseAction {
                 ServiceMethod serviceMethod = prepareServiceMethod(request);
                 try {
                     Object service = serviceMethod.getService().invoke(this);
-                    Object argObject = getXStreamJSON().fromXML(request.get("args").replace("%22", "\""));
-                    Object wsResponse = serviceMethod.getMethod().invoke(service, argObject);
+                    String args = request.get("args").replace("%22", "\"");
+                    Object wsResponse;
+                    Object argObject = getXStreamJSON().fromXML(args);
+                    if (argObject instanceof List) {
+                        List argList = (List) argObject;
+                        Object[] argArray = argList.toArray();
+                        wsResponse = serviceMethod.getMethod().invoke(service, argArray);
+                    } else {
+                        wsResponse = serviceMethod.getMethod().invoke(service, argObject);
+                    }
                     return Ok(request).add("data", wsResponse).toResponse();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -88,11 +97,11 @@ public class WSAction extends BaseAction {
         return null;
     }
 
-    public CurrencyConvertor geCurrencyConvertor() {
-        if (currencyConvertor == null) {
+    public CurrencyConvertorSoap geCurrencyConvertor() {
+        if (currencyConvertorSoap == null) {
             Service service = new CurrencyConvertor();
-            currencyConvertor = service.getPort(CurrencyConvertor.class);
-            BindingProvider bp = ((BindingProvider) currencyConvertor);
+            currencyConvertorSoap = service.getPort(CurrencyConvertorSoap.class);
+            BindingProvider bp = ((BindingProvider) currencyConvertorSoap);
 
             // set logging handlers and connection/request timeouts
             HandlerResolver handlerResolver = new LogHandlerResolver();
@@ -102,7 +111,7 @@ public class WSAction extends BaseAction {
             handlerList.add(new LoggingHandler());
             binding.setHandlerChain(handlerList);
         }
-        return currencyConvertor;
+        return currencyConvertorSoap;
     }
 
     private class ServiceMethod {
