@@ -170,4 +170,32 @@ public class BaseAction extends ActionResponse implements Action {
     public <T extends Object> T getObject(Class<T> t) {
         return ContextMap.getInstance().getContext().getObject(t);
     }
+
+    @SuppressWarnings("unchecked")
+    public QueryBuilder query(Class<? extends Model> clazz) {
+        return new QueryBuilder(clazz);
+    }
+
+    private class QueryBuilder<T extends Model> {
+
+        private ModelAction<T> modelAction;
+        private ParamMapBuilder<String, Param<String, Object>> paramMapBuilder = new ParamMapBuilder<String, Param<String, Object>>();
+
+        public QueryBuilder(Class<T> clazz) {
+            modelAction = new ModelAction<T>(clazz);
+        }
+
+        public QueryBuilder add(String field, Object value) {
+            return add(field, value, ParamRelation.EQ);
+        }
+
+        public QueryBuilder add(String field, Object value, ParamRelation relation) {
+            paramMapBuilder.add(field, value, relation);
+            return this;
+        }
+
+        public List<T> findAll() {
+            return modelAction.findAll(paramMapBuilder.getParamMap());
+        }
+    }
 }
