@@ -57,7 +57,7 @@ public class BaseAction extends ActionResponse implements Action {
             try {
                 Map<byte[], String> contentAndExtension = new HashMap<byte[], String>();
                 FileContentHandler fileContentHandler = new FileContentHandler();
-                byte[] content = new byte[0];
+                byte[] content;
                 content = fileContentHandler.getContent(fileContentHandler.getContentPath(), fileName);
                 String extension = fileContentHandler.getFileExtension();
                 contentAndExtension.put(content, extension);
@@ -167,7 +167,7 @@ public class BaseAction extends ActionResponse implements Action {
         logger.log(Level.INFO, message);
     }
 
-    public <T extends Object> T getObject(Class<T> t) {
+    public <T> T getObject(Class<T> t) {
         return ContextMap.getInstance().getContext().getObject(t);
     }
 
@@ -179,23 +179,19 @@ public class BaseAction extends ActionResponse implements Action {
     private class QueryBuilder<T extends Model> {
 
         private ModelAction<T> modelAction;
-        private ParamMapBuilder<String, Param<String, Object>> paramMapBuilder = new ParamMapBuilder<String, Param<String, Object>>();
+        ParamMap<String, Param<String, Object>> paramMap = new ParamMap<String, Param<String, Object>>();
 
         public QueryBuilder(Class<T> clazz) {
             modelAction = new ModelAction<T>(clazz);
         }
 
-        public QueryBuilder add(String field, Object value) {
-            return add(field, value, ParamRelation.EQ);
-        }
-
-        public QueryBuilder add(String field, Object value, ParamRelation relation) {
-            paramMapBuilder.add(field, value, relation);
+        public QueryBuilder add(String field, ParamRelation relation, Object value) {
+            paramMap.addParam(new Param<String, Object>(field, value, relation));
             return this;
         }
 
         public List<T> findAll() {
-            return modelAction.findAll(paramMapBuilder.getParamMap());
+            return modelAction.findAll(paramMap);
         }
     }
 }

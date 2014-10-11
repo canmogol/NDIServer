@@ -1,20 +1,20 @@
 import com.fererlab.action.BaseAction
 import com.fererlab.action.ModelAction
 import com.fererlab.db.EM
-import com.fererlab.dto.*
+import com.fererlab.dto.Param
+import com.fererlab.dto.ParamMap
+import com.fererlab.dto.Request
+import com.fererlab.dto.Response
 import com.ndi.app.model.Department
+import com.thoughtworks.xstream.annotations.XStreamImplicit
 
 import javax.persistence.EntityManager
 import javax.persistence.Query
 import javax.persistence.TypedQuery
-import javax.persistence.criteria.CriteriaBuilder
-import javax.persistence.criteria.CriteriaQuery
-import javax.persistence.criteria.Expression
-import javax.persistence.criteria.Root
-import javax.persistence.metamodel.EntityType
-import javax.persistence.metamodel.Metamodel
-import javax.persistence.criteria.Predicate
-import static com.fererlab.dto.ParamRelation.*
+import javax.persistence.criteria.*
+
+import static com.fererlab.dto.ParamRelation.EQ
+import static com.fererlab.dto.ParamRelation.GE
 
 public class DepartmentAction extends BaseAction {
 
@@ -30,8 +30,8 @@ public class DepartmentAction extends BaseAction {
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listModelParamMapBuilder(Request request) {
-        List<Department> list = query(Department.class).add("name", "Sports", EQ).findAll();
+    Response listModelQuery(Request request) {
+        List<Department> list = query(Department.class).add("name", EQ, "Sports").findAll();
         return Ok(request).add("data", list).toResponse();
     }
 
