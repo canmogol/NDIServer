@@ -2,6 +2,7 @@ package com.fererlab.dto;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * acm
@@ -14,10 +15,11 @@ public class GActionModel implements Serializable, Model {
     private Long id;
     private String name;
     private String content;
+    private Date updateDate = new Date();
 
     @Id
-    @SequenceGenerator(name="GACTION_ID_GENERATOR", sequenceName="SEQ_GACTIONMODEL")
-    @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="GACTION_ID_GENERATOR")
+    @SequenceGenerator(name = "GACTION_ID_GENERATOR", sequenceName = "SEQ_GACTIONMODEL")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "GACTION_ID_GENERATOR")
     public Long getId() {
         return this.id;
     }
@@ -26,6 +28,7 @@ public class GActionModel implements Serializable, Model {
         this.id = id;
     }
 
+    @Column(name = "G_NAME", unique = true, nullable = false)
     public String getName() {
         return name;
     }
@@ -34,7 +37,7 @@ public class GActionModel implements Serializable, Model {
         this.name = name;
     }
 
-    @Column(length = 4000)
+    @Column(name = "G_CONTENT", length = 4000, nullable = false)
     public String getContent() {
         return content;
     }
@@ -43,4 +46,13 @@ public class GActionModel implements Serializable, Model {
         this.content = content;
     }
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "G_UPDATED")
+    public Date getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(Date updated) {
+        this.updateDate = updateDate;
+    }
 }

@@ -1,41 +1,40 @@
-import com.fererlab.action.BaseAction
-import com.fererlab.action.ModelAction
-import com.fererlab.db.EM
-import com.fererlab.dto.Param
-import com.fererlab.dto.ParamMap
-import com.fererlab.dto.Request
-import com.fererlab.dto.Response
-import com.ndi.app.model.Department
-import com.thoughtworks.xstream.annotations.XStreamImplicit
+import com.fererlab.action.BaseAction;
+import com.fererlab.action.ModelAction;
+import com.fererlab.db.EM;
+import com.fererlab.dto.Param;
+import com.fererlab.dto.ParamMap;
+import com.fererlab.dto.Request;
+import com.fererlab.dto.Response;
+import com.ndi.app.model.Department;
 
-import javax.persistence.EntityManager
-import javax.persistence.Query
-import javax.persistence.TypedQuery
-import javax.persistence.criteria.*
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.util.List;
 
-import static com.fererlab.dto.ParamRelation.EQ
-import static com.fererlab.dto.ParamRelation.GE
+import static com.fererlab.dto.ParamRelation.EQ;
 
 public class DepartmentAction extends BaseAction {
 
-    Response listModelAll(Request request) {
+    public Response listModelAll(Request request) {
         ModelAction<Department> modelAction = new ModelAction<Department>(Department.class);
         List<Department> list = modelAction.findAll();
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listModelKeyValue(Request request) {
+    public Response listModelKeyValue(Request request) {
         ModelAction<Department> modelAction = new ModelAction<Department>(Department.class);
         List<Department> list = modelAction.findAll("name", "Sports");
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listModelQuery(Request request) {
-        List<Department> list = query(Department.class).add("name", EQ, "Sports").findAll();
+    public Response listModelQuery(Request request) {
+        List<Department> list = query(Department.class).and("name", EQ, "Sports").findAll();
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listModelParam(Request request) {
+    public Response listModelParam(Request request) {
         ModelAction<Department> modelAction = new ModelAction<Department>(Department.class);
         ParamMap<String, Param<String, Object>> searchCriteria = new ParamMap<String, Param<String, Object>>();
         searchCriteria.addParam(new Param<String, Object>("name", "Sports", EQ));
@@ -43,14 +42,14 @@ public class DepartmentAction extends BaseAction {
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listNativeQuery(Request request) {
+    public Response listNativeQuery(Request request) {
         EntityManager entityManager = EM.getEntityManager();
         Query nativeQuery = entityManager.createNativeQuery("select d.* from department as d where d.name='Sports'");
         List list = nativeQuery.getResultList();
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listNamedQuery(Request request) {
+    public Response listNamedQuery(Request request) {
         EntityManager entityManager = EM.getEntityManager();
         Query nativeQuery = entityManager.createNamedQuery(Department.FIND_NAME);
         nativeQuery.setParameter("name", "Sports");
@@ -58,7 +57,7 @@ public class DepartmentAction extends BaseAction {
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listQuery(Request request) {
+    public Response listQuery(Request request) {
         EntityManager entityManager = EM.getEntityManager();
         Query nativeQuery = entityManager.createQuery("select d from Department d where d.name=:name");
         nativeQuery.setParameter("name", "Sports");
@@ -66,7 +65,7 @@ public class DepartmentAction extends BaseAction {
         return Ok(request).add("data", list).toResponse();
     }
 
-    Response listCriteriaQuery(Request request) {
+    public Response listCriteriaQuery(Request request) {
         EntityManager entityManager = EM.getEntityManager();
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Department> criteriaQuery = cb.createQuery(Department.class);

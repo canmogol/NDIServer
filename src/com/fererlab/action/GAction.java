@@ -12,7 +12,9 @@ import java.io.FileReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.List;
+
 
 /**
  * acm
@@ -21,7 +23,6 @@ import java.util.List;
 public class GAction extends BaseAction {
 
     String startParameterDev = null;
-    boolean productionOrDevelopment = false;
 
     public Response runGroovy(Request request) {
         try {
@@ -34,83 +35,166 @@ public class GAction extends BaseAction {
                 return Error(request, "missing dynamicClassName key").toResponse();
             }
 
-            // check the java execution params for dev or prod values
-            RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
-            List<String> arguments = runtimeMxBean.getInputArguments();
-            // it will be run only for the first request
-            if (startParameterDev == null) {
-                // this condition will met only once per lifecycle
-                startParameterDev = "";
-                for (String arg : arguments) {
-                    if (arg != null && arg.startsWith("-Dtarget.env=")) {
-                        startParameterDev = arg.substring("-Dtarget.env=".length());
-                        break;
-                    }
-                }
-                if (startParameterDev == null || "prod".equalsIgnoreCase(startParameterDev)) {
-                    // either there is no parameter for environment or it is prod
-                    productionOrDevelopment = true;
-                } else if ("dev".equalsIgnoreCase(startParameterDev)) {
-                    // parameter for environment exist and it is "dev"
-                    productionOrDevelopment = false;
-                }
-            }
+            //      check if this is development or production environment
+            String environment = findEnvironment(request);
+            //      find the source to execute
+            String source = findSource(request);
+            log("environment: " + environment + ", source: " + source);
 
-            // if the URL param _dev exists, it overrides the java execution params
-            if ((request.get("_dev") != null && "true".equalsIgnoreCase(request.get("_dev")))) {
-                productionOrDevelopment = false;
-            }
-
-            // check if this is a production environment
-            if (productionOrDevelopment) {
+            // if env is class then create an instance and return response
+            if ("class".equalsIgnoreCase(source)) {
                 try {
                     // try to find the class
                     Class clazz = Class.forName(request.get("dynamicClassName") + "Action");
                     // and return response
                     return createObjectReturnResponse(clazz, request, true);
                 } catch (Exception e) {
-                    // could not find the class, will try to find the content from database
-                    ModelAction<GActionModel> modelAction = new ModelAction<GActionModel>(GActionModel.class);
-                    List<GActionModel> list = modelAction.findAll("name", request.get("dynamicClassName"));
-                    // found entry at db
-                    if (list != null && list.size() > 0) {
-                        GActionModel gActionModel = list.get(0);
-                        // got the content of the code
-                        content = gActionModel.getContent();
-                    }
+                    return Error(request, "no action class exists, class name: " + request.get("dynamicClassName")).exception(e).toResponse();
                 }
             }
-            // it is either development environment which means it should read the content of the class from file
-            // or it is production environment but could not find the compiled class or no entry at DB
-            if (content == null) {
-                // we will check if this class content is in the file
+
+            // do according to source
+            if ("db".equalsIgnoreCase(source)) {
+                // could not find the class, will try to find the content from database
+                ModelAction<GActionModel> modelAction = new ModelAction<GActionModel>(GActionModel.class);
+                List<GActionModel> list = modelAction.findAll("name", request.get("dynamicClassName"));
+                // found entry at db
+                if (list != null && list.size() > 0) {
+                    GActionModel gActionModel = list.get(0);
+                    // got the content of the code
+                    content = gActionModel.getContent();
+                }
+            } else if ("db-update-from-file".equalsIgnoreCase(source)) {
+                // get content from file, may be this is a development source and db needs to be reloaded from file
                 content = readContentsOfFile(request);
-                // now content should not be null, if it is null it means we don't have this action
-                if (content == null) {
-                    // this is really bad, because it means we don't have this action
-                    return Error(request, "no action class or content at DB or content file exists, class name: " + request.get("dynamicClassName")).toResponse();
-                } else if (productionOrDevelopment) {
-                    // if this is production and it reached here,
-                    // it means in production if found the content from file but content is not in DB,
-                    // so it should put the content to DB,
-                    // next request will not reach here, it will found the content at DB request
-                    ParamMap<String, Param<String, Object>> keyValuePairs = new ParamMap<String, Param<String, Object>>();
-                    keyValuePairs.addParam(new Param<String, Object>("name", request.get("dynamicClassName")));
-                    keyValuePairs.addParam(new Param<String, Object>("content", content));
-                    ModelAction<GActionModel> modelAction = new ModelAction<GActionModel>(GActionModel.class);
-                    GActionModel gActionModel = modelAction.create(keyValuePairs);
+                List<GActionModel> gActionModels = query(GActionModel.class).and("name", request.get("dynamicClassName")).findAll();
+                if (gActionModels != null && gActionModels.size() > 0) {
+                    GActionModel gActionModel = gActionModels.get(0);
+                    gActionModel.setContent(content);
+                    gActionModel = EM.merge(gActionModel);
+                } else {
+                    GActionModel gActionModel = new GActionModel();
+                    gActionModel.setName(request.get("dynamicClassName"));
+                    gActionModel.setContent(content);
+                    gActionModel.setUpdateDate(new Date());
+                    EM.persist(gActionModel);
                 }
+            } else if ("file".equalsIgnoreCase(source)) {
+                // read the content from file, this may be the default for development source
+                content = readContentsOfFile(request);
             }
-            // regardless of is this a development or production environment,
             // now we have the content of the code so will execute it as if it is a groovy script and return response
             ClassLoader parent = getClass().getClassLoader();
             GroovyClassLoader loader = new GroovyClassLoader(parent);
             Class clazz = loader.parseClass(content);
-            return createGObjectReturnResponse(clazz, request, productionOrDevelopment);
+            // only for production, objects are singleton, others will reload for every request
+            return createGObjectReturnResponse(clazz, request, "production".equals(environment));
         } catch (Exception e) {
             e.printStackTrace();
             return Error(request, e.getMessage()).toResponse();
         }
+    }
+
+    private String findSource(Request request) {
+        // set the predefined value as 'class'
+        String current = "class";
+        String source = current;
+        // check the java execution params for dev or prod values
+        RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+        List<String> arguments = runtimeMxBean.getInputArguments();
+        // it will be run only for the first request
+        if (startParameterDev == null) {
+            // this condition will met only once per lifecycle
+            startParameterDev = "";
+            for (String arg : arguments) {
+                if (arg != null && arg.startsWith("-Dtarget.source=")) {
+                    startParameterDev = arg.substring("-Dtarget.source=".length());
+                    break;
+                }
+            }
+        }
+        // first level is jvm parameter
+        if (startParameterDev == null) {
+            current = startParameterDev;
+        }
+
+        // second is the session
+        if (request.getSession().containsKey("Dtarget.source") && request.getSession().get("Dtarget.source") != null) {
+            current = String.valueOf(request.getSession().get("Dtarget.source"));
+        }
+
+        // third is the header
+        if (request.getHeader("Dtarget.source") != null) {
+            current = request.getHeader("Dtarget.source");
+        }
+
+        // last is the request
+        if (request.get("Dtarget.source") != null) {
+            current = request.get("Dtarget.source");
+        }
+
+        if ("db".equalsIgnoreCase(current)) {
+            source = "db";
+        } else if ("db-update-from-file".equalsIgnoreCase(current)) {
+            source = "db-update-from-file";
+        } else if ("file".equalsIgnoreCase(current)) {
+            source = "file";
+        } else if ("class".equalsIgnoreCase(current)) {
+            source = "class";
+        }
+
+        // return current execution source
+        return source;
+    }
+
+    private String findEnvironment(Request request) {
+        // set the predefined value as 'class'
+        String current = "production";
+        String environment = current;
+        // check the java execution params for dev or prod values
+        RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+        List<String> arguments = runtimeMxBean.getInputArguments();
+        // it will be run only for the first request
+        if (startParameterDev == null) {
+            // this condition will met only once per lifecycle
+            startParameterDev = "";
+            for (String arg : arguments) {
+                if (arg != null && arg.startsWith("-Dtarget.env=")) {
+                    startParameterDev = arg.substring("-Dtarget.env=".length());
+                    break;
+                }
+            }
+        }
+        // first level is jvm parameter
+        if (startParameterDev != null) {
+            current = startParameterDev;
+        }
+
+        // second is the session
+        if (request.getSession().containsKey("Dtarget.env") && request.getSession().get("Dtarget.env") != null) {
+            current = String.valueOf(request.getSession().get("Dtarget.env"));
+        }
+
+        // third is the header
+        if (request.getHeader("Dtarget.env") != null) {
+            current = request.getHeader("Dtarget.env");
+        }
+
+        // last is the request
+        if (request.get("Dtarget.env") != null) {
+            current = request.get("Dtarget.env");
+        }
+
+        if ("development".equalsIgnoreCase(current) || "dev".equalsIgnoreCase(current)) {
+            environment = "development";
+        } else if ("test".equalsIgnoreCase(current)) {
+            environment = "test";
+        } else {
+            environment = "production";
+        }
+
+        // return current execution environment
+        return environment;
     }
 
     private String readContentsOfFile(Request request) throws Exception {

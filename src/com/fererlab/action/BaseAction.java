@@ -3,6 +3,7 @@ package com.fererlab.action;
 import com.fererlab.cache.Cache;
 import com.fererlab.collect.Collector;
 import com.fererlab.collect.Exec;
+import com.fererlab.db.QueryBuilder;
 import com.fererlab.dto.*;
 import com.fererlab.map.ContextMap;
 import com.fererlab.map.MimeTypeMap;
@@ -171,27 +172,8 @@ public class BaseAction extends ActionResponse implements Action {
         return ContextMap.getInstance().getContext().getObject(t);
     }
 
-    @SuppressWarnings("unchecked")
-    public QueryBuilder query(Class<? extends Model> clazz) {
-        return new QueryBuilder(clazz);
+    public <T extends Model> QueryBuilder<T> query(Class<T> t) {
+        return new QueryBuilder<T>(t);
     }
 
-    private class QueryBuilder<T extends Model> {
-
-        private ModelAction<T> modelAction;
-        ParamMap<String, Param<String, Object>> paramMap = new ParamMap<String, Param<String, Object>>();
-
-        public QueryBuilder(Class<T> clazz) {
-            modelAction = new ModelAction<T>(clazz);
-        }
-
-        public QueryBuilder add(String field, ParamRelation relation, Object value) {
-            paramMap.addParam(new Param<String, Object>(field, value, relation));
-            return this;
-        }
-
-        public List<T> findAll() {
-            return modelAction.findAll(paramMap);
-        }
-    }
 }
