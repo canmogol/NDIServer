@@ -80,7 +80,7 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
 
         // will store all predicates
         List<Predicate> predicates = new ArrayList<Predicate>();
-        List<Boolean> andOr = new ArrayList<Boolean>();
+        List<Boolean> andOrList = new ArrayList<Boolean>();
 
         // parameter list
         List<ParameterExpression<Object>> parameterExpressionList = new ArrayList<ParameterExpression<Object>>();
@@ -111,10 +111,10 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
                     continue;
                 }
                 // add and or for query builder
-                if (param.getValueSecondary() != null && param.getValueSecondary().equals("or")) {
-                    andOr.add(Boolean.FALSE);
+                if (param.getValueSecondary() != null && param.getValueSecondary().equals(false)) {
+                    andOrList.add(Boolean.FALSE);
                 } else {
-                    andOr.add(Boolean.TRUE);
+                    andOrList.add(Boolean.TRUE);
                 }
                 // create a parameter expression with value's type
                 ParameterExpression parameterExpression = null;
@@ -159,18 +159,37 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
                 parameterList.add(param.getValue());
             }
 
+            // where    and|x=1     and|y=2     or|z=3
             // set predicates if any
             if (predicates.size() > 0) {
-                Predicate[] predicatesArray = new Predicate[predicates.size()];
-                for (int i = 0; i < predicates.size(); i++) {
-                    predicatesArray[i] = predicates.get(i);
+                List<Predicate> predicateList = new ArrayList<Predicate>();
+                Predicate predicate;
+                for (int i = 0; i < predicates.size(); i = i + 2) {
                     if (i + 1 < predicates.size()) {
-                        Predicate nextPredicate = predicates.get(i+1);
-
+                        Boolean andOr = andOrList.get(i + 1);
+                        if (andOr) {
+                            predicate = criteriaBuilder.and(predicates.get(i), predicates.get(i + 1));
+                        } else {
+                            predicate = criteriaBuilder.or(predicates.get(i), predicates.get(i + 1));
+                        }
+                        predicateList.add(predicate);
+                    } else {
+                        Boolean andOr = andOrList.get(i);
+                        if (andOr) {
+                            predicate = criteriaBuilder.and(predicates.get(i));
+                        } else {
+                            predicate = criteriaBuilder.or(predicates.get(i));
+                        }
+                        predicateList.add(predicate);
                     }
                 }
-                Predicate and = criteriaBuilder.and(predicatesArray);
-                criteriaQuery.where(and);
+                if (predicateList.size() > 0) {
+                    Predicate[] predicateArray = new Predicate[predicateList.size()];
+                    for (int i = 0; i < predicateList.size(); i++) {
+                        predicateArray[i] = predicateList.get(i);
+                    }
+                    criteriaQuery.where(predicateArray);
+                }
             }
 
         }
