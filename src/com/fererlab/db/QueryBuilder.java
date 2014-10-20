@@ -25,7 +25,16 @@ public class QueryBuilder<T extends Model> {
     }
 
     public QueryBuilder<T> and(String field, ParamRelation relation, Object value) {
-        paramMap.addParam(new Param<String, Object>(field, value, relation));
+        paramMap.addParam(new Param<String, Object>(field, value, "and", relation));
+        return this;
+    }
+
+    public QueryBuilder<T> or(String field, Object value) {
+        return or(field, ParamRelation.EQ, value);
+    }
+
+    public QueryBuilder<T> or(String field, ParamRelation relation, Object value) {
+        paramMap.addParam(new Param<String, Object>(field, value, "or", relation));
         return this;
     }
 

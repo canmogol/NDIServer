@@ -25,7 +25,7 @@ public class NDI extends BaseApplication {
     @Override
     public Response runApplication(final Request request) {
         // read the cookie to Session object
-        request.getSession().fromCookie(this.getClass().getPackage().getName() + "." + this.getClass().getName(),
+        request.getSession().fromCookie(this.getClass().getName(),
                 "23746s2s8ad723423jh2323746s2s8ad723423jh-989asc2213543687sad12311234t");
         // run application
         return super.runApplication(request);

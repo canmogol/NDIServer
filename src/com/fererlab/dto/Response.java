@@ -1,8 +1,9 @@
 package com.fererlab.dto;
 
+import com.fererlab.session.Session;
+
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
 
 /**
  * acm 10/15/12
@@ -16,17 +17,20 @@ public class Response implements Serializable {
     private byte[] contentChar = null;
 
     public Response(ParamMap<String, Param<String, Object>> headers, Session session, Status status, byte[] contentChar) {
-        this.headers = headers;
-        this.session = session;
-        this.status = status;
+        this(headers, session, status);
         this.setContentChar(contentChar);
     }
 
     public Response(ParamMap<String, Param<String, Object>> headers, Session session, Status status, String content) {
+        this(headers, session, status);
+        this.setContent(content);
+    }
+
+    public Response(ParamMap<String, Param<String, Object>> headers, Session session, Status status) {
         this.headers = headers;
         this.session = session;
         this.status = status;
-        this.setContent(content);
+        this.setContent(status.getStatus() + ": " + status.getMessage());
     }
 
     public ParamMap<String, Param<String, Object>> getHeaders() {
@@ -71,8 +75,6 @@ public class Response implements Serializable {
                 "headers=" + headers +
                 ", session=" + session +
                 ", status=" + status +
-                ", content='" + content + '\'' +
-                ", contentChar='" + Arrays.toString(contentChar) + '\'' +
                 '}';
     }
 

@@ -23,12 +23,12 @@ import java.util.List;
 public class GAction extends BaseAction {
 
     String startParameterDev = null;
+    String startParameterSource = null;
 
     public Response runGroovy(Request request) {
         try {
             // reset content and clear entity manager
             String content = null;
-            EM.getEntityManager().clear();
 
             // there should be at least class name
             if (request.get("dynamicClassName") == null) {
@@ -56,6 +56,7 @@ public class GAction extends BaseAction {
             // do according to source
             if ("db".equalsIgnoreCase(source)) {
                 // could not find the class, will try to find the content from database
+                EM.getEntityManager().clear();
                 ModelAction<GActionModel> modelAction = new ModelAction<GActionModel>(GActionModel.class);
                 List<GActionModel> list = modelAction.findAll("name", request.get("dynamicClassName"));
                 // found entry at db
@@ -66,6 +67,7 @@ public class GAction extends BaseAction {
                 }
             } else if ("db-update-from-file".equalsIgnoreCase(source)) {
                 // get content from file, may be this is a development source and db needs to be reloaded from file
+                EM.getEntityManager().clear();
                 content = readContentsOfFile(request);
                 List<GActionModel> gActionModels = query(GActionModel.class).and("name", request.get("dynamicClassName")).findAll();
                 if (gActionModels != null && gActionModels.size() > 0) {
@@ -103,19 +105,19 @@ public class GAction extends BaseAction {
         RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
         List<String> arguments = runtimeMxBean.getInputArguments();
         // it will be run only for the first request
-        if (startParameterDev == null) {
+        if (startParameterSource == null) {
             // this condition will met only once per lifecycle
-            startParameterDev = "";
+            startParameterSource = "";
             for (String arg : arguments) {
                 if (arg != null && arg.startsWith("-Dtarget.source=")) {
-                    startParameterDev = arg.substring("-Dtarget.source=".length());
+                    startParameterSource = arg.substring("-Dtarget.source=".length());
                     break;
                 }
             }
         }
         // first level is jvm parameter
-        if (startParameterDev == null) {
-            current = startParameterDev;
+        if (startParameterSource != null) {
+            current = startParameterSource;
         }
 
         // second is the session

@@ -80,6 +80,7 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
 
         // will store all predicates
         List<Predicate> predicates = new ArrayList<Predicate>();
+        List<Boolean> andOr = new ArrayList<Boolean>();
 
         // parameter list
         List<ParameterExpression<Object>> parameterExpressionList = new ArrayList<ParameterExpression<Object>>();
@@ -108,6 +109,12 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
                 // if model does not have this field than do not add the parameter as a criteria
                 if (!fieldNames.contains(param.getKey())) {
                     continue;
+                }
+                // add and or for query builder
+                if (param.getValueSecondary() != null && param.getValueSecondary().equals("or")) {
+                    andOr.add(Boolean.FALSE);
+                } else {
+                    andOr.add(Boolean.TRUE);
                 }
                 // create a parameter expression with value's type
                 ParameterExpression parameterExpression = null;
@@ -157,6 +164,10 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
                 Predicate[] predicatesArray = new Predicate[predicates.size()];
                 for (int i = 0; i < predicates.size(); i++) {
                     predicatesArray[i] = predicates.get(i);
+                    if (i + 1 < predicates.size()) {
+                        Predicate nextPredicate = predicates.get(i+1);
+
+                    }
                 }
                 Predicate and = criteriaBuilder.and(predicatesArray);
                 criteriaQuery.where(and);

@@ -1,4 +1,4 @@
-package com.fererlab.dto;
+package com.fererlab.session;
 
 /**
  * acm 10/15/12

@@ -5,6 +5,7 @@ import com.fererlab.dto.*;
 
 import javax.servlet.http.Cookie;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -108,10 +109,13 @@ public class ConnectionHandler implements Runnable {
         connection.getHttpServletResponse().setStatus(connection.getResponse().getStatus().getStatus());
 
         // set cookie(s)
-        for (String key : connection.getResponse().getSession().getKeyValueMap().keySet()) {
-            connection.getHttpServletResponse().addCookie(new Cookie(
-                    key, connection.getResponse().getSession().getKeyValueMap().get(key)
-            ));
+        Map<String, String> keyValueMap = connection.getResponse().getSession().getKeyValueMap();
+        for (String key : keyValueMap.keySet()) {
+            if (key != null && !key.isEmpty()) {
+                connection.getHttpServletResponse().addCookie(new Cookie(
+                        key, keyValueMap.get(key)
+                ));
+            }
         }
 
         // set headers

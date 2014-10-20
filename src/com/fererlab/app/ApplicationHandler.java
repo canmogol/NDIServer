@@ -1,6 +1,7 @@
 package com.fererlab.app;
 
 import com.fererlab.dto.*;
+import com.fererlab.session.Session;
 
 import java.util.logging.Logger;
 
@@ -27,9 +28,9 @@ public class ApplicationHandler {
             if (adh.applicationExists(applicationName)) {
                 // change the request URI for application to handle request correctly
                 String currentRequestURI = request.getParams().getValue(RequestKeys.URI.getValue()).toString();
-                String uriStarts = projectName == null ? "/" + applicationName : "/" + projectName + applicationName;
-                if (currentRequestURI.startsWith(uriStarts)) {
-                    currentRequestURI = currentRequestURI.substring((uriStarts).length());
+                String uriStartsWith = projectName == null ? "/" + applicationName : "/" + projectName + applicationName;
+                if (currentRequestURI.startsWith(uriStartsWith)) {
+                    currentRequestURI = currentRequestURI.substring((uriStartsWith).length());
                     if (currentRequestURI.lastIndexOf("?") != -1) {
                         currentRequestURI = currentRequestURI.substring(0, currentRequestURI.lastIndexOf("?"));
                     }
@@ -38,7 +39,7 @@ public class ApplicationHandler {
                             currentRequestURI
                     );
                     request.getParams().put(RequestKeys.URI.getValue(), param);
-                    log("request URI for this application changed to: \"" + request.getParams().get(RequestKeys.URI.getValue()).getValue() + "\"");
+                    log("request URI for application: " + applicationName + " changed to: \"" + request.getParams().get(RequestKeys.URI.getValue()).getValue() + "\"");
                 }
                 log("will run the application: " + applicationName);
                 return adh.getApplication(applicationName).runApplication(request);

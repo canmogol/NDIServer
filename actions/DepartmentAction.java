@@ -30,7 +30,7 @@ public class DepartmentAction extends BaseAction {
     }
 
     public Response listModelQuery(Request request) {
-        List<Department> list = query(Department.class).and("name", EQ, "Sports").findAll();
+        List<Department> list = query(Department.class).and("name", EQ, "Sports").and("email","s@s.com").findAll();
         return Ok(request).add("data", list).toResponse();
     }
 

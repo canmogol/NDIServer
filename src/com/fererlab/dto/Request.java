@@ -1,5 +1,7 @@
 package com.fererlab.dto;
 
+import com.fererlab.session.Session;
+
 import java.io.Serializable;
 
 /**

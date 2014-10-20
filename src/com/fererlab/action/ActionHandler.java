@@ -5,11 +5,13 @@ import com.fererlab.db.EM;
 import com.fererlab.db.Transactional;
 import com.fererlab.dto.*;
 import com.fererlab.map.*;
+import com.fererlab.session.SessionKeys;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,8 +102,8 @@ public class ActionHandler {
                 className = GAction.class.getName();
                 methodName = "runGroovy";
                 templateName = null;
-                request.getParams().addParam(new Param<String, Object>("dynamicClassName",dynamicClassName));
-                request.getParams().addParam(new Param<String, Object>("dynamicMethodName",dynamicMethodName));
+                request.getParams().addParam(new Param<String, Object>("dynamicClassName", dynamicClassName));
+                request.getParams().addParam(new Param<String, Object>("dynamicMethodName", dynamicMethodName));
             }
         }
 
@@ -193,19 +195,30 @@ public class ActionHandler {
             }
         }
 
-        /*
+        // authorization flag for user's group
+        boolean userAuthorized = false;
+
         // find the user's group names
         String[] groupNamesCommaSeparated = null;
-        if (request.getSession().containsKey(SessionKeys.GROUP_NAMES.getValue())) {
-            groupNamesCommaSeparated = ((String) request.getSession().get(SessionKeys.GROUP_NAMES.getValue())).split(",");
+        if (request.getSession().containsKey(SessionKeys.GROUP_NAMES.getValue())
+                && request.getSession().get(SessionKeys.GROUP_NAMES.getValue()) != null) {
+            String encryptedGroupNames = String.valueOf(request.getSession().get(SessionKeys.GROUP_NAMES.getValue()));
+            String decryptedGroupNames = request.getSession().decrypt(encryptedGroupNames);
+            if (decryptedGroupNames != null) {
+                groupNamesCommaSeparated = decryptedGroupNames.split(",");
+            }
+        }
+
+        // user at least should have GUEST group
+        if (groupNamesCommaSeparated == null) {
+            String everybody = "*";
+            request.getSession().putEncrypt(SessionKeys.GROUP_NAMES.getValue(), everybody);
+            groupNamesCommaSeparated = new String[]{everybody};
         }
 
         // check the AuthenticationAuthorizationMap contains requestMethod
         if (authenticationAuthorizationMap.containsKey(requestMethod)
                 || authenticationAuthorizationMap.containsKey("*")) {
-
-            // authorization flag for user's group
-            boolean userAuthorized = false;
 
             // for this http request method, like GET, POST or PUT
             Map<String, List<String>> uriGroupNames = authenticationAuthorizationMap.get(requestMethod);
@@ -217,17 +230,6 @@ public class ActionHandler {
 
             // check this requested uri has any authentication/authorization
             if (uriGroupNames.containsKey(requestURI)) {
-
-                // the user does not have any groups but this uri needs at least one group
-                // return STATUS_UNAUTHORIZED
-                if (groupNamesCommaSeparated == null) {
-                    return new Response(
-                            new ParamMap<String, Param<String, Object>>(),
-                            request.getSession(),
-                            Status.STATUS_UNAUTHORIZED,
-                            ""
-                    );
-                }
 
                 // authorized groups for this uri
                 List<String> authorizedGroups = uriGroupNames.get(requestURI);
@@ -248,14 +250,12 @@ public class ActionHandler {
                     }
                 }
 
-
                 // if the user is not authorized return STATUS_UNAUTHORIZED
                 if (!userAuthorized) {
                     return new Response(
                             new ParamMap<String, Param<String, Object>>(),
                             request.getSession(),
-                            Status.STATUS_UNAUTHORIZED,
-                            ""
+                            Status.STATUS_UNAUTHORIZED
                     );
                 }
             }
@@ -276,8 +276,7 @@ public class ActionHandler {
                         return new Response(
                                 new ParamMap<String, Param<String, Object>>(),
                                 request.getSession(),
-                                Status.STATUS_UNAUTHORIZED,
-                                ""
+                                Status.STATUS_UNAUTHORIZED
                         );
                     }
 
@@ -289,22 +288,18 @@ public class ActionHandler {
                             break;
                         }
                     }
-
-                    // if the user is not authorized return STATUS_UNAUTHORIZED
-                    if (!userAuthorized) {
-                        return new Response(
-                                new ParamMap<String, Param<String, Object>>(),
-                                request.getSession(),
-                                Status.STATUS_UNAUTHORIZED,
-                                ""
-                        );
-                    }
                 }
             }
         }
-        */
 
-        if (className != null) {
+        // if the user is not authorized return STATUS_UNAUTHORIZED
+        if (!userAuthorized) {
+            return new Response(
+                    new ParamMap<String, Param<String, Object>>(),
+                    request.getSession(),
+                    Status.STATUS_UNAUTHORIZED
+            );
+        } else if (className != null) {
             // set Class and Method
             try {
                 actionClass = Class.forName(className);
@@ -418,4 +413,23 @@ public class ActionHandler {
 
     }
 
+    public ExecutionMap getExecutionMap() {
+        return executionMap;
+    }
+
+    public AuthenticationAuthorizationMap getAuthenticationAuthorizationMap() {
+        return authenticationAuthorizationMap;
+    }
+
+    public MimeTypeMap getMimeTypeMap() {
+        return mimeTypeMap;
+    }
+
+    public CacheMap getCacheMap() {
+        return cacheMap;
+    }
+
+    public ContextMap getContextMap() {
+        return contextMap;
+    }
 }

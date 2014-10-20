@@ -4,6 +4,8 @@ import com.fererlab.app.ApplicationDescriptionHandler;
 import com.fererlab.dto.*;
 import com.fererlab.server.Connection;
 import com.fererlab.server.ConnectionHandler;
+import com.fererlab.session.Session;
+import com.fererlab.session.SessionKeys;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;

@@ -77,23 +77,23 @@ public class ApplicationDescriptionHandler {
             // check if the applications map has this Application
             if (!applicationsMap.containsKey(key)) {
                 // if not create and put it to the map
-//                ClassLoader classLoaderPre = Thread.currentThread().getContextClassLoader();
+                ClassLoader classLoaderPre = Thread.currentThread().getContextClassLoader();
                 Application application = createApplication(key);
-//                ClassLoader classLoaderCurrent = Thread.currentThread().getContextClassLoader();
-//                if (!classLoaderPre.equals(classLoaderCurrent)) {
-//                    classLoaderMap.put(key, classLoaderCurrent);
-//                }
+                ClassLoader classLoaderCurrent = Thread.currentThread().getContextClassLoader();
+                if (!classLoaderPre.equals(classLoaderCurrent)) {
+                    classLoaderMap.put(key, classLoaderCurrent);
+                }
                 application.setDevelopmentMode(false);
                 application.start();
                 applicationsMap.put(key, application);
             }
 
             // set if this application has its own ClassLoader
-//            if (classLoaderMap.containsKey(key)) {
-//                Thread.currentThread().setContextClassLoader(
-//                        classLoaderMap.get(key)
-//                );
-//            }
+            if (classLoaderMap.containsKey(key)) {
+                Thread.currentThread().setContextClassLoader(
+                        classLoaderMap.get(key)
+                );
+            }
 
             // application already in map return it
             return applicationsMap.get(key);
@@ -341,18 +341,18 @@ public class ApplicationDescriptionHandler {
             className = applicationPathAndClass;
         }
 
-        Class classToLoad = Class.forName(className);
-//        Class classToLoad;
-//        if (urlsToLoad == null) {
-//            classToLoad = Class.forName(className);
-//        } else {
-//            URLClassLoader classLoader = new URLClassLoader(
-//                    urlsToLoad,
-//                    this.getClass().getClassLoader()
-//            );
-//            Thread.currentThread().setContextClassLoader(classLoader);
-//            classToLoad = Class.forName(className, true, classLoader);
-//        }
+//        Class classToLoad = Class.forName(className);
+        Class classToLoad;
+        if (urlsToLoad == null) {
+            classToLoad = Class.forName(className);
+        } else {
+            URLClassLoader classLoader = new URLClassLoader(
+                    urlsToLoad,
+                    this.getClass().getClassLoader()
+            );
+            Thread.currentThread().setContextClassLoader(classLoader);
+            classToLoad = Class.forName(className, true, classLoader);
+        }
 
         return (Application) classToLoad.newInstance();
     }
