@@ -10,9 +10,7 @@ import com.fererlab.session.SessionKeys;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * acm | 1/16/13
@@ -24,6 +22,7 @@ public class ActionHandler {
     private MimeTypeMap mimeTypeMap = MimeTypeMap.getInstance();
     private CacheMap cacheMap = CacheMap.getInstance();
     private ContextMap contextMap = ContextMap.getInstance();
+    private Map<String, List<String>> uriGroupNames = new HashMap<String, List<String>>();
 
     public ActionHandler(URL executionMapFile, URL authenticationAuthorizationMapFile, URL mimeTypeMapFile, URL cacheMapFile, URL contextFile) {
         executionMap.readUriExecutionMap(executionMapFile);
@@ -220,21 +219,49 @@ public class ActionHandler {
         if (authenticationAuthorizationMap.containsKey(requestMethod)
                 || authenticationAuthorizationMap.containsKey("*")) {
 
-            // for this http request method, like GET, POST or PUT
-            Map<String, List<String>> uriGroupNames = authenticationAuthorizationMap.get(requestMethod);
+            if (uriGroupNames.isEmpty()) {
+                // for this http request method, like GET, POST or PUT
+                if (authenticationAuthorizationMap.get(requestMethod) != null) {
+                    uriGroupNames.putAll(authenticationAuthorizationMap.get(requestMethod));
+                }
+                if (authenticationAuthorizationMap.get("*") != null) {
+                    uriGroupNames.putAll(authenticationAuthorizationMap.get("*"));
+                }
+            }
 
-            // may be request method defined as *
-            if (uriGroupNames == null) {
-                uriGroupNames = authenticationAuthorizationMap.get("*");
+            // check if the uri is wildcard
+            if (!uriGroupNames.keySet().contains(requestURI)) {
+                boolean uriFound = false;
+                Set<String> uriSet = uriGroupNames.keySet();
+                LinkedList<String> uriList = new LinkedList<String>(uriSet);
+                Collections.sort(uriList);
+                Iterator<String> iterator = uriList.descendingIterator();
+                while (iterator.hasNext()) {
+                    String uri = iterator.next();
+                    String searchUri = uri;
+                    if (searchUri.endsWith("/**")) {
+                        searchUri = searchUri.substring(0, searchUri.length() - 3);
+                    }
+                    if (requestURI.startsWith(searchUri)) {
+                        String restOfUri = uri.substring(uri.length() - 3);
+                        if (restOfUri.equals("/**")) {
+                            uriGroupNames.put(requestURI, uriGroupNames.get(uri));
+                            uriFound = true;
+                            break;
+                        }
+                    }
+                }
+                if (!uriFound) {
+                    uriGroupNames.put(requestURI, null);
+                }
             }
 
             // check this requested uri has any authentication/authorization
-            if (uriGroupNames.containsKey(requestURI)) {
-
-                // authorized groups for this uri
-                List<String> authorizedGroups = uriGroupNames.get(requestURI);
+            if (uriGroupNames.get(requestURI) != null) {
 
                 // user has at least one group
+                List<String> authorizedGroups = uriGroupNames.get(requestURI);
+
                 // if the authorizedGroups contains (*) it means any authenticated client may request this uri
                 if (authorizedGroups.contains("*")) {
                     userAuthorized = true;
@@ -257,37 +284,6 @@ public class ActionHandler {
                             request.getSession(),
                             Status.STATUS_UNAUTHORIZED
                     );
-                }
-            }
-
-
-            // check for the [*] all http method request map
-            if (!userAuthorized) {
-
-                // [*] http request method
-                uriGroupNames = authenticationAuthorizationMap.get("*");
-
-                // check this requested uri has any authentication/authorization
-                if (uriGroupNames.containsKey(requestURI)) {
-
-                    // the user does not have any groups but this uri needs some
-                    // return STATUS_UNAUTHORIZED
-                    if (groupNamesCommaSeparated == null) {
-                        return new Response(
-                                new ParamMap<String, Param<String, Object>>(),
-                                request.getSession(),
-                                Status.STATUS_UNAUTHORIZED
-                        );
-                    }
-
-                    // find the required group names
-                    List<String> authorizedGroups = uriGroupNames.get(requestURI);
-                    for (String userGroupName : groupNamesCommaSeparated) {
-                        if (authorizedGroups.contains(userGroupName)) {
-                            userAuthorized = true;
-                            break;
-                        }
-                    }
                 }
             }
         }
