@@ -10,12 +10,28 @@ public class UserAction extends BaseAction {
     @Wire
     private LDAPService ldapService;
 
+    Response showUser(Request r) {
+        return Ok(r).add("data", r.getSession().getUser()).toResponse();
+    }
+
+    Response doLogout(Request r) {
+        r.getSession().getUser().logout();
+        return Ok(r).add("data", r.getSession().getUser()).toResponse();
+    }
+
     @Transactional
-    Response doLogin(Request request) {
-        if (ldapService.checkUsernamePassword(request.get("username"), request.get("password"))) {
-            return Ok(request).add("data", "welcome").toResponse();
+    Response doLogin(Request r) {
+        if (ldapService.checkUsernamePassword(r.get("username"), r.get("password"))) {
+            if (!r.getSession().getUser().isLogged()) {
+                r.getSession().getUser().setLogged(true);
+                r.getSession().getUser().setUsername(r.get("username"));
+                r.getSession().getUser().setSessionId(r.getSession().getSessionId());
+                r.getSession().getUser().getGroups().add("admin");
+                r.getSession().getUser().getGroups().add("user");
+            }
+            return Ok(r).add("data", "welcome").toResponse();
         } else {
-            return Error(request, "could not logged in").toResponse();
+            return Error(r, "could not logged in").toResponse();
         }
     }
 

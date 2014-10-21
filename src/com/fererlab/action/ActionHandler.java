@@ -5,7 +5,8 @@ import com.fererlab.db.EM;
 import com.fererlab.db.Transactional;
 import com.fererlab.dto.*;
 import com.fererlab.map.*;
-import com.fererlab.session.SessionKeys;
+import com.fererlab.session.Session;
+import com.fererlab.session.SessionUser;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
@@ -198,21 +199,12 @@ public class ActionHandler {
         boolean userAuthorized = false;
 
         // find the user's group names
-        String[] groupNamesCommaSeparated = null;
-        if (request.getSession().containsKey(SessionKeys.GROUP_NAMES.getValue())
-                && request.getSession().get(SessionKeys.GROUP_NAMES.getValue()) != null) {
-            String encryptedGroupNames = String.valueOf(request.getSession().get(SessionKeys.GROUP_NAMES.getValue()));
-            String decryptedGroupNames = request.getSession().decrypt(encryptedGroupNames);
-            if (decryptedGroupNames != null) {
-                groupNamesCommaSeparated = decryptedGroupNames.split(",");
-            }
-        }
-
+        Session session = request.getSession();
+        SessionUser user = session.getUser();
         // user at least should have GUEST group
-        if (groupNamesCommaSeparated == null) {
+        if (user.getGroups().isEmpty()) {
             String everybody = "*";
-            request.getSession().putEncrypt(SessionKeys.GROUP_NAMES.getValue(), everybody);
-            groupNamesCommaSeparated = new String[]{everybody};
+            user.getGroups().add(everybody);
         }
 
         // check the AuthenticationAuthorizationMap contains requestMethod
@@ -269,7 +261,7 @@ public class ActionHandler {
 
                 // find the required group names
                 else {
-                    for (String userGroupName : groupNamesCommaSeparated) {
+                    for (String userGroupName : user.getGroups()) {
                         if (authorizedGroups.contains(userGroupName)) {
                             userAuthorized = true;
                             break;

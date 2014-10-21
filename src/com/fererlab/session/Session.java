@@ -8,6 +8,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,7 +22,8 @@ public class Session extends TreeMap<String, Serializable> {
     private String cookieSignSecretKey;
     private String applicationCookieName;
     private String rawContent = "";
-
+    private SessionUser user;
+    private String sessionId;
 
     public Session(String rawContent) {
         this.rawContent = rawContent;
@@ -117,6 +119,12 @@ public class Session extends TreeMap<String, Serializable> {
     }
 
     public Map<String, String> getKeyValueMap() {
+        putEncrypt(SessionKeys.USER.getValue(),
+                SessionKeys.USERNAME.getValue() + "=" + getUser().getUsername() + ";" +
+                        SessionKeys.SESSION_ID.getValue() + "=" + getUser().getSessionId() + ";" +
+                        SessionKeys.IS_LOGGED.getValue() + "=" + String.valueOf(getUser().isLogged()) + ";" +
+                        SessionKeys.GROUP_NAMES.getValue() + "=" + String.valueOf(getUser().getGroups()) + ";"
+        );
         Map<String, String> keyValueMap = new HashMap<String, String>();
         String applicationCookieKeyValueString = "";
         for (String key : this.keySet()) {
@@ -192,6 +200,44 @@ public class Session extends TreeMap<String, Serializable> {
 
     public void putEncrypt(String key, String value) {
         put(key, AES.symmetricEncrypt(value, cookieDefaultPassword));
+    }
+
+    public SessionUser getUser() {
+        if (user == null) {
+            user = new SessionUser();
+            if (containsKey(SessionKeys.USER.getValue()) && get(SessionKeys.USER.getValue()) != null) {
+                String encryptedUser = String.valueOf(get(SessionKeys.USER.getValue()));
+                String decryptedUser = decrypt(encryptedUser);
+                for (String keyValuePair : decryptedUser.split(";")) {
+                    String[] keyValue = splitFromFirst(keyValuePair, "=");
+                    if (keyValue.length == 2) {
+                        if (SessionKeys.USERNAME.getValue().equalsIgnoreCase(keyValue[0])) {
+                            user.setUsername("null".equalsIgnoreCase(keyValue[1]) ? null : keyValue[1]);
+                        } else if (SessionKeys.SESSION_ID.getValue().equalsIgnoreCase(keyValue[0])) {
+                            user.setSessionId("null".equalsIgnoreCase(keyValue[1]) ? null : keyValue[1]);
+                        } else if (SessionKeys.IS_LOGGED.getValue().equalsIgnoreCase(keyValue[0])) {
+                            user.setLogged("true".equalsIgnoreCase(keyValue[1]));
+                        } else if (SessionKeys.GROUP_NAMES.getValue().equalsIgnoreCase(keyValue[0])) {
+                            String groupNames = keyValue[1];
+                            groupNames = groupNames.substring(1, groupNames.length() - 1).trim();//will remove '[' and ']'
+                            for (String groupName : groupNames.split(",")) {
+                                if (!groupName.trim().isEmpty()) {
+                                    user.getGroups().add(groupName.trim());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return user;
+    }
+
+    public String getSessionId() {
+        if (sessionId == null) {
+            sessionId = sha1(new Random().nextDouble() + cookieSignSecretKey).substring(0, 32);
+        }
+        return sessionId;
     }
 
 }

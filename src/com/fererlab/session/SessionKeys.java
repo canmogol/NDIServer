@@ -5,15 +5,17 @@ package com.fererlab.session;
  */
 public enum SessionKeys {
 
-    USERNAME("USERNAME"),
-    PASSWORD("PASSWORD"),
-    AUTHENTICATION_TYPE("AUTHENTICATION_TYPE"),
-    SESSION_STORED_AT("SESSION_STORED_AT"),
-    SESSION_ID("SESSION_ID"),
-    IS_LOGGED("IS_LOGGED"),
+    // user related
+    USER("S_USER_COOKIE"),
+    IS_LOGGED("S_USER_IS_LOGGED"),
+    USERNAME("S_USER_USERNAME"),
+    GROUP_NAMES("S_USER_GROUP_NAMES"),
+    SESSION_ID("S_USER_SESSION_ID"),
+
+    // cookie related
     COOKIE_SIGN_KEY("fr_ck_sn_ky"),
-    GROUP_NAMES("GROUP_NAMES"),
     COOKIE("cookie");
+
 
     private final String value;
 
