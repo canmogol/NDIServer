@@ -65,8 +65,7 @@ public class ActionHandler {
                     return new Response(
                             new ParamMap<String, Param<String, Object>>(),
                             request.getSession(),
-                            Status.STATUS_NOT_FOUND,
-                            ""
+                            Status.STATUS_NOT_FOUND
                     );
                 }
                 String extension = fileContentHandler.getFileExtension();
@@ -234,7 +233,7 @@ public class ActionHandler {
                     if (searchUri.endsWith("/**")) {
                         searchUri = searchUri.substring(0, searchUri.length() - 3);
                     }
-                    if (requestURI.startsWith(searchUri)) {
+                    if (requestURI.startsWith(searchUri) && uri.length() > 3) {
                         String restOfUri = uri.substring(uri.length() - 3);
                         if (restOfUri.equals("/**")) {
                             uriGroupNames.put(requestURI, uriGroupNames.get(uri));
@@ -297,33 +296,19 @@ public class ActionHandler {
                     request.getParams().addParam(new Param<String, Object>(RequestKeys.RESPONSE_TEMPLATE.getValue(), templateName));
                 }
 
-                /*
                 // check the AuthenticationAuthorizationMap contains requestMethod
-                // com.bugzter.app.action.*                    *               *
-                // com.bugzter.app.action.SomeAction       login           admin,system
+                // com.app.action.*                    *               *
+                // com.app.action.SomeAction       login           admin,system
                 Map<String, List<String>> methodGroupsMap = null;
-                if (authenticationAuthorizationMap.containsKey(actionClass.getPackage().getName() + "." + actionClass.getName())) {
-                    methodGroupsMap = authenticationAuthorizationMap.get(actionClass.getPackage().getName() + "." + actionClass.getName());
+                if (authenticationAuthorizationMap.containsKey(actionClass.getName())) {
+                    methodGroupsMap = authenticationAuthorizationMap.get(actionClass.getName());
                 } else if (authenticationAuthorizationMap.containsKey(actionClass.getPackage().getName() + ".*")) {
                     methodGroupsMap = authenticationAuthorizationMap.get(actionClass.getPackage().getName() + ".*");
                 }
 
                 // check this methodName has any authentication/authorization
-                if (methodGroupsMap.containsKey(methodName) || methodGroupsMap.containsKey("*")) {
-
-                    // authorization flag for user's group
-                    boolean userAuthorized = false;
-
-                    // the user does not have any groups but this method execution needs at least one group
-                    // return STATUS_UNAUTHORIZED
-                    if (groupNamesCommaSeparated == null) {
-                        return new Response(
-                                new ParamMap<String, Param<String, Object>>(),
-                                request.getSession(),
-                                Status.STATUS_UNAUTHORIZED,
-                                ""
-                        );
-                    }
+                if (methodGroupsMap != null &&
+                        (methodGroupsMap.containsKey(methodName) || methodGroupsMap.containsKey("*"))) {
 
                     // authorized groups for this uri
                     List<String> authorizedGroups = methodGroupsMap.get(methodName);
@@ -336,7 +321,8 @@ public class ActionHandler {
 
                     // find the required group names
                     else {
-                        for (String userGroupName : groupNamesCommaSeparated) {
+                        userAuthorized = false;
+                        for (String userGroupName : user.getGroups()) {
                             if (authorizedGroups.contains(userGroupName)) {
                                 userAuthorized = true;
                                 break;
@@ -349,12 +335,10 @@ public class ActionHandler {
                         return new Response(
                                 new ParamMap<String, Param<String, Object>>(),
                                 request.getSession(),
-                                Status.STATUS_UNAUTHORIZED,
-                                ""
+                                Status.STATUS_UNAUTHORIZED
                         );
                     }
                 }
-                */
 
                 // check if the method is transactional
                 if (method.getAnnotation(Transactional.class) != null) {
@@ -395,8 +379,7 @@ public class ActionHandler {
         return new Response(
                 new ParamMap<String, Param<String, Object>>(),
                 request.getSession(),
-                Status.STATUS_SERVICE_UNAVAILABLE,
-                ""
+                Status.STATUS_SERVICE_UNAVAILABLE
         );
 
     }

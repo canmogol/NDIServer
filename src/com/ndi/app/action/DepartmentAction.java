@@ -27,4 +27,5 @@ public class DepartmentAction extends BaseAction {
                 .add("data", userList)
                 .toResponse();
     }
+
 }

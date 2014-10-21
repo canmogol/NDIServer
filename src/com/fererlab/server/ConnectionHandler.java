@@ -112,9 +112,10 @@ public class ConnectionHandler implements Runnable {
         Map<String, String> keyValueMap = connection.getResponse().getSession().getKeyValueMap();
         for (String key : keyValueMap.keySet()) {
             if (key != null && !key.isEmpty()) {
-                connection.getHttpServletResponse().addCookie(new Cookie(
-                        key, keyValueMap.get(key)
-                ));
+                Cookie cookie = new Cookie(key, keyValueMap.get(key));
+                cookie.setPath("/");
+                cookie.setMaxAge(10 * 365 * 24 * 60 * 60);
+                connection.getHttpServletResponse().addCookie(cookie);
             }
         }
 

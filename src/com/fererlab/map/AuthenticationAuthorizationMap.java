@@ -32,8 +32,8 @@ public class AuthenticationAuthorizationMap extends HashMap<String, Map<String, 
         /admin              [POST,PUT,DELETE]           admin,system,root
 
         # PACKAGE.CLASS                             METHOD          User
-        com.bugzter.app.action.SomeAction       login           admin,system
-        com.bugzter.app.action.GenericAction        *               system
+        com.app.action.SomeAction       login           admin,system
+        com.app.action.GenericAction        *               system
         */
 
         // read ExecutionMap.properties
@@ -91,11 +91,11 @@ public class AuthenticationAuthorizationMap extends HashMap<String, Map<String, 
                         }
                     }
                     /*
-                    com.bugzter.app.action.SomeAction       login           admin,system
+                    com.app.action.SomeAction       login           admin,system
                      */
                     else {
 
-                        //      "com.bugzter.app.action.SomeAction"
+                        //      "com.app.action.SomeAction"
                         String packageClassName = currentLine.split(" ")[0].trim();
                         //      "login           admin,system"
                         String methodAndGroups = currentLine.substring(packageClassName.length()).trim();
@@ -112,7 +112,11 @@ public class AuthenticationAuthorizationMap extends HashMap<String, Map<String, 
                                 groupNamesList.add(groupName.trim());
                             }
                         }
-                        // "com.bugzter.app.action.SomeAction" -> {"login" => [admin,system]}
+                        // if there is not entry until now, put an empty HashMap
+                        if (!this.containsKey(packageClassName)) {
+                            this.put(packageClassName, new HashMap<String, List<String>>());
+                        }
+                        // "com.app.action.SomeAction" -> {"login" => [admin,system]}
                         this.get(packageClassName).put(methodName, groupNamesList);
                     }
                 }
