@@ -69,7 +69,7 @@ public class ApplicationDescriptionHandler {
 
                 // will return Application here
                 Application application = createApplication(key);
-                application.setDevelopmentMode(true);
+                application.setMode(EApplicationMode.DEVELOPMENT);
                 application.start();
                 return application;
             }
@@ -83,7 +83,7 @@ public class ApplicationDescriptionHandler {
                 if (!classLoaderPre.equals(classLoaderCurrent)) {
                     classLoaderMap.put(key, classLoaderCurrent);
                 }
-                application.setDevelopmentMode(false);
+                application.setMode(EApplicationMode.PRODUCTION);
                 application.start();
                 applicationsMap.put(key, application);
             }
@@ -206,12 +206,7 @@ public class ApplicationDescriptionHandler {
                 return new Application() {
 
                     @Override
-                    public void setDevelopmentMode(boolean isDevelopment) {
-                    }
-
-                    @Override
-                    public boolean isDevelopmentModeOn() {
-                        return false;
+                    public void setMode(EApplicationMode mode) {
                     }
 
                     @Override

@@ -235,7 +235,7 @@ public class Session extends TreeMap<String, Serializable> {
 
     public String getSessionId() {
         if (sessionId == null) {
-            sessionId = sha1(new Random().nextDouble() + cookieSignSecretKey).substring(0, 32);
+            sessionId = sha1(new Random().nextDouble() + cookieSignSecretKey);
         }
         return sessionId;
     }

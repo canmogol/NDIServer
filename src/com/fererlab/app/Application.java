@@ -8,9 +8,7 @@ import com.fererlab.dto.Response;
  */
 public interface Application {
 
-    void setDevelopmentMode(boolean isDevelopment);
-
-    boolean isDevelopmentModeOn();
+    void setMode(EApplicationMode mode);
 
     void start();
 

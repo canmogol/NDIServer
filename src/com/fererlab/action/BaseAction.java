@@ -6,7 +6,9 @@ import com.fererlab.collect.Exec;
 import com.fererlab.db.QueryBuilder;
 import com.fererlab.dto.*;
 import com.fererlab.map.ContextMap;
+import com.fererlab.map.MessageProperties;
 import com.fererlab.map.MimeTypeMap;
+import com.fererlab.map.ProjectProperties;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
@@ -174,6 +176,14 @@ public class BaseAction extends ActionResponse implements Action {
 
     public <T extends Model> QueryBuilder<T> query(Class<T> t) {
         return new QueryBuilder<T>(t);
+    }
+
+    public String property(String key) {
+        return ProjectProperties.getInstance().get(key);
+    }
+
+    public String message(String key) {
+        return MessageProperties.getInstance().getValue(key);
     }
 
 }

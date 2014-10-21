@@ -1,6 +1,7 @@
 package com.ndi.app;
 
 import com.fererlab.app.BaseApplication;
+import com.fererlab.app.EApplicationMode;
 import com.fererlab.db.EM;
 import com.fererlab.dto.Request;
 import com.fererlab.dto.Response;
@@ -13,9 +14,9 @@ public class NDI extends BaseApplication {
 
     @Override
     public void start() {
-        if (!isDevelopmentModeOn()) {
+        if (EApplicationMode.DEVELOPMENT.equals(getMode())) {
             try {
-                EM.start("db");
+                EM.start(property("persistence-unit"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -25,8 +26,7 @@ public class NDI extends BaseApplication {
     @Override
     public Response runApplication(final Request request) {
         // read the cookie to Session object
-        request.getSession().fromCookie(this.getClass().getName(),
-                "23746s2s8ad723423jh2323746s2s8ad723423jh-989asc2213543687sad12311234t");
+        request.getSession().fromCookie(this.getClass().getName(), property("sign"));
         // run application
         return super.runApplication(request);
     }

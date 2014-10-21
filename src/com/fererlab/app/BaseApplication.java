@@ -1,15 +1,17 @@
 package com.fererlab.app;
 
-import com.fererlab.ndi.*;
 import com.fererlab.action.ActionHandler;
 import com.fererlab.dto.Request;
 import com.fererlab.dto.Response;
+import com.fererlab.map.MessageProperties;
+import com.fererlab.map.ProjectProperties;
 
 /**
  * acm
  */
 public abstract class BaseApplication implements Application {
 
+    private EApplicationMode mode;
     private ActionHandler actionHandler = new ActionHandler(
             getClass().getClassLoader().getResource("ExecutionMap.properties"),
             getClass().getClassLoader().getResource("AuthenticationAuthorizationMap.properties"),
@@ -18,18 +20,20 @@ public abstract class BaseApplication implements Application {
             getClass().getClassLoader().getResource("ContextMap.properties")
     );
 
-    private boolean isDevelopment = false;
-
-    private WireContext context;
-
     @Override
-    public void setDevelopmentMode(boolean isDevelopment) {
-        this.isDevelopment = isDevelopment;
+    public void setMode(EApplicationMode mode) {
+        this.mode = mode;
+        String suffix = EApplicationMode.DEVELOPMENT.equals(mode) ? ".dev" : (EApplicationMode.TESTING.equals(mode) ? ".test" : "");
+        ProjectProperties.getInstance().readProjectProperties(getClass().getSimpleName().toLowerCase(), suffix);
+        MessageProperties.getInstance().readMessageProperties(getClass().getSimpleName().toLowerCase());
     }
 
-    @Override
-    public boolean isDevelopmentModeOn() {
-        return isDevelopment;
+    public EApplicationMode getMode() {
+        return mode;
+    }
+
+    public String property(String key) {
+        return ProjectProperties.getInstance().get(key);
     }
 
     @Override

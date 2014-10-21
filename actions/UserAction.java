@@ -31,7 +31,7 @@ public class UserAction extends BaseAction {
             }
             user.getGroups().add("admin");
             user.getGroups().add("user");
-            return Ok(r).add("data", "welcome!").toResponse();
+            return Ok(r).add("data", user).add("welcome", message("welcome")).toResponse();
         } else {
             return Error(r, "could not logged in").toResponse();
         }
