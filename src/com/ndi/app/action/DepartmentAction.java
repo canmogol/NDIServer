@@ -12,20 +12,21 @@ import java.util.List;
  */
 public class DepartmentAction extends BaseAction {
 
+    public Response listModelAll(Request request) {
+        ModelAction<Department> modelAction = new ModelAction<Department>(Department.class);
+        List<Department> list = modelAction.findAll();
+        return Ok(request).add("data", list).toResponse();
+    }
+
     public Response specialSearch(Request request) {
         ModelAction<Department> modelAction = new ModelAction<Department>(Department.class);
-        List<Department> list = modelAction.findAll("email", "a@a.com", "name", "a");
-
         List<Department> userList = modelAction.findAll(
                 new ParamMap<String, Param<String, Object>>() {{
                     addParam(new Param<String, Object>("email", "a@a.com", ParamRelation.LIKE));
                     addParam(new Param<String, Object>("name", "a"));
                 }}
         );
-
-        return Ok(request)
-                .add("data", userList)
-                .toResponse();
+        return Ok(request).add("data", userList).toResponse();
     }
 
 }

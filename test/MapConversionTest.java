@@ -40,7 +40,7 @@ public class MapConversionTest {
         String map = xStreamJSON.toXML(properties);
         String user = xStreamJSON.toXML(sessionUser);
 
-        Map<String, Object> objectMap = (Map<String, Object>) xStreamJSON.fromXML(map);
+        Object objectMap = xStreamJSON.fromXML(map);
         SessionUser sessionUserFrom = (SessionUser) xStreamJSON.fromXML(user);
         System.out.println("");
     }
