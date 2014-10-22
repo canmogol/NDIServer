@@ -49,7 +49,7 @@ public class ApplicationHandler {
         } catch (Exception e) {
             e.printStackTrace();
             log("Exception occurred while running the application, will return service unavailable message, e: " + e.getMessage());
-            return new Response(new ParamMap<String, Param<String, Object>>(), new Session(""), Status.STATUS_SERVICE_UNAVAILABLE, "");
+            return new Response(new ParamMap<String, Param<String, Object>>(), new Session(""), Status.STATUS_SERVICE_UNAVAILABLE);
         }
     }
 

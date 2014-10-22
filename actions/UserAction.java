@@ -12,7 +12,7 @@ public class UserAction extends BaseAction {
     private LDAPService ldapService;
 
     Response showUser(Request r) {
-        return Ok(r).add("data", r.getSession().getUser()).toResponse();
+        return Ok(r).add("data", r.getSession().getUser()).add("welcome", message("welcome")).toResponse();
     }
 
     Response doLogout(Request r) {

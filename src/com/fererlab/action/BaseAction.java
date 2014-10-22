@@ -14,10 +14,7 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
 
 import java.io.FileNotFoundException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -184,6 +181,14 @@ public class BaseAction extends ActionResponse implements Action {
 
     public String message(String key) {
         return MessageProperties.getInstance().getValue(key);
+    }
+
+    public String message(String locale, String key) {
+        return MessageProperties.getInstance().getValue(locale, key);
+    }
+
+    public String message(Locale locale, String key) {
+        return MessageProperties.getInstance().getValue(locale, key);
     }
 
 }

@@ -28,7 +28,7 @@ public class PairConverter extends AbstractCollectionConverter {
             writer.startNode(String.valueOf(key));
             if (map.getMap().get(key) instanceof String) {
                 writer.setValue(String.valueOf(map.getMap().get(key)));
-            } else {
+            } else if(map.getMap().get(key) != null){
                 context.convertAnother(map.getMap().get(key));
             }
             writer.endNode();

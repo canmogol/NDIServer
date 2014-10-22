@@ -27,11 +27,21 @@ public class ProjectProperties extends HashMap<String, String> {
         try {
             URL url = getClass().getClassLoader().getResource(directoryName);
             if (url != null) {
-                File projectPropertiesFile = new File(url.getPath() + "/project" + suffix + ".properties");
+                // first load the project.properties file
+                File projectPropertiesFile = new File(url.getPath() + "/project.properties");
                 Properties properties = new Properties();
                 properties.load(new FileReader(projectPropertiesFile));
                 for (Object key : properties.keySet()) {
                     put(String.valueOf(key), String.valueOf(properties.get(key)));
+                }
+                if(suffix != null && !suffix.isEmpty()){
+                    // then load the project.SUFFIX.properties file to override the default values
+                    projectPropertiesFile = new File(url.getPath() + "/project" + suffix + ".properties");
+                    properties = new Properties();
+                    properties.load(new FileReader(projectPropertiesFile));
+                    for (Object key : properties.keySet()) {
+                        put(String.valueOf(key), String.valueOf(properties.get(key)));
+                    }
                 }
             }
         } catch (Exception e) {

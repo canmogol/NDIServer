@@ -55,7 +55,7 @@ public class Status implements Serializable {
     // Server error responses
     public final static Status STATUS_INTERNAL_SERVER_ERROR = new Status(500, "Internal Server Error");
     public final static Status STATUS_NOT_IMPLEMENTED = new Status(501, "Not Implemented");
-    public final static Status STATUS_BAD_GATEWAY = new Status(503, "Bad Gateway");
+    public final static Status STATUS_BAD_GATEWAY = new Status(502, "Bad Gateway");
     public final static Status STATUS_SERVICE_UNAVAILABLE = new Status(503, "Service Unavailable");
     public final static Status STATUS_GATEWAY_TIMEOUT = new Status(504, "Gateway Timeout");
     public final static Status STATUS_HTTP_VERSION_NOT_SUPPORTED = new Status(505, "HTTP Version Not Supported");

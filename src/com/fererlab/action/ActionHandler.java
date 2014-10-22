@@ -369,8 +369,7 @@ public class ActionHandler {
                 new Response(
                         new ParamMap<String, Param<String, Object>>(),
                         request.getSession(),
-                        Status.STATUS_SERVICE_UNAVAILABLE,
-                        e.getMessage()
+                        Status.STATUS_SERVICE_UNAVAILABLE
                 );
             }
         }

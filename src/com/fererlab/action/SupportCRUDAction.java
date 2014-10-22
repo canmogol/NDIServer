@@ -34,7 +34,7 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
                     .add("data", t)
                     .toResponse();
         } catch (Exception e) {
-            return Error(request, "Error: " + e.getMessage()).toResponse();
+            return Error(request, e.getMessage()).exception(e).toResponse();
         }
     }
 
@@ -47,7 +47,7 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
                     .add("totalCount", totalCount)
                     .toResponse();
         } catch (Exception e) {
-            return Error(request, "Error: " + e.getMessage()).toResponse();
+            return Error(request, e.getMessage()).exception(e).toResponse();
         }
     }
 
@@ -58,7 +58,7 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
                     .add("data", t)
                     .toResponse();
         } catch (Exception e) {
-            return Error(request, "Error: " + e.getMessage()).exception(e).toResponse();
+            return Error(request, e.getMessage()).exception(e).toResponse();
         }
     }
 
@@ -70,7 +70,7 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
                     .add("data", t)
                     .toResponse();
         } catch (Exception e) {
-            return Error(request, "Error: " + e.getMessage()).toResponse();
+            return Error(request, e.getMessage()).exception(e).toResponse();
         }
     }
 
@@ -84,7 +84,7 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
                         .add("data", t)
                         .toResponse();
             } catch (Exception e) {
-                return Error(request, "could not delete object with id: " + id + " exception: " + e.getMessage()).toResponse();
+                return Error(request, "could not delete object with id: " + id).exception(e).toResponse();
             }
         } catch (Exception e) {
             return Error(request, "Error: " + e.getMessage()).toResponse();
@@ -116,10 +116,10 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
                         .add("data", deletedIds)
                         .toResponse();
             } catch (Exception e) {
-                return Error(request, "could not delete objects, exception: " + e.getMessage()).toResponse();
+                return Error(request, "could not delete objects").exception(e).toResponse();
             }
         } catch (Exception e) {
-            return Error(request, "Error: " + e.getMessage()).toResponse();
+            return Error(request, e.getMessage()).exception(e).toResponse();
         }
     }
 

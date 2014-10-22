@@ -220,8 +220,7 @@ public class ApplicationDescriptionHandler {
                         Response response = new Response(
                                 new ParamMap<String, Param<String, Object>>(),
                                 request.getSession(),
-                                Status.STATUS_SERVICE_UNAVAILABLE,
-                                ""
+                                Status.STATUS_SERVICE_UNAVAILABLE
                         );
 
                         // try to send Request and get the Response, otherwise the empty Response will return

@@ -93,7 +93,7 @@ public class GAction extends BaseAction {
             return createGObjectReturnResponse(clazz, request, "production".equals(environment));
         } catch (Exception e) {
             e.printStackTrace();
-            return Error(request, e.getMessage()).toResponse();
+            return Error(request, e.getMessage()).exception(e).toResponse();
         }
     }
 
@@ -245,7 +245,7 @@ public class GAction extends BaseAction {
                 return runMethodReturnResponse(object, request);
             } catch (Exception e) {
                 e.printStackTrace();
-                return Error(request, "could not handle method, e: " + e.getMessage()).toResponse();
+                return Error(request, "could not handle method").exception(e).toResponse();
             }
         }
     }
@@ -282,7 +282,7 @@ public class GAction extends BaseAction {
                 } catch (Exception em) {
                     e.printStackTrace();
                     em.printStackTrace();
-                    return Error(request, "could not run method neither dynamic nor compiled, e: " + em.getMessage()).toResponse();
+                    return Error(request, "could not run method neither dynamic nor compiled,").exception(em).toResponse();
                 }
             }
         }
