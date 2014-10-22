@@ -1,8 +1,7 @@
 package com.fererlab.session;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * acm
@@ -13,6 +12,7 @@ public class SessionUser implements Serializable, Cloneable {
     private String username;
     private String sessionId;
     private Set<String> groups = new HashSet<String>();
+    private Map<String, Object> properties = new TreeMap<String, Object>();
 
     public SessionUser() {
     }
@@ -45,10 +45,15 @@ public class SessionUser implements Serializable, Cloneable {
         return groups;
     }
 
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
     public void logout() {
         setLogged(false);
         setUsername(null);
         setSessionId(null);
         getGroups().clear();
+        getProperties().clear();
     }
 }

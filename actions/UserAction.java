@@ -1,10 +1,14 @@
 import com.fererlab.action.BaseAction;
+import com.fererlab.action.ModelAction;
 import com.fererlab.db.Transactional;
 import com.fererlab.dto.Request;
 import com.fererlab.dto.Response;
 import com.fererlab.ndi.Wire;
 import com.fererlab.session.SessionUser;
+import com.ndi.app.model.Department;
 import com.ndi.app.service.LDAPService;
+
+import java.util.List;
 
 public class UserAction extends BaseAction {
 
@@ -12,7 +16,7 @@ public class UserAction extends BaseAction {
     private LDAPService ldapService;
 
     Response showUser(Request r) {
-        return Ok(r).add("data", r.getSession().getUser()).add("welcome", message("welcome")).toResponse();
+        return Ok(r).add("data", r.getSession().getUser()).toResponse();
     }
 
     Response doLogout(Request r) {
@@ -31,6 +35,10 @@ public class UserAction extends BaseAction {
             }
             user.getGroups().add("admin");
             user.getGroups().add("user");
+
+            ModelAction<Department> modelAction = new ModelAction<Department>(Department.class);
+            List<Department> departments = modelAction.findAll();
+            user.getProperties().put("departments", departments);
             return Ok(r).add("data", user).add("welcome", message("welcome")).toResponse();
         } else {
             return Error(r, "could not logged in").toResponse();

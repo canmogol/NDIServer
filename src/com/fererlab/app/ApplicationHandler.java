@@ -43,9 +43,10 @@ public class ApplicationHandler {
                 }
                 log("will run the application: " + applicationName);
                 return adh.getApplication(applicationName).runApplication(request);
+            }else{
+                log("will return not found message");
+                return new Response(new ParamMap<String, Param<String, Object>>(), new Session(""), Status.STATUS_NOT_FOUND);
             }
-            log("will return not found message");
-            return new Response(new ParamMap<String, Param<String, Object>>(), new Session(""), Status.STATUS_NOT_FOUND, "");
         } catch (Exception e) {
             e.printStackTrace();
             log("Exception occurred while running the application, will return service unavailable message, e: " + e.getMessage());

@@ -1,6 +1,8 @@
 package com.fererlab.session;
 
 import com.fererlab.servlet.AES;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.Serializable;
@@ -18,15 +20,19 @@ import java.util.regex.Pattern;
  */
 public class Session extends TreeMap<String, Serializable> {
 
+    private XStream xStreamJSON = new XStream(new JettisonMappedXmlDriver());
+
     private String cookieDefaultPassword;
     private String cookieSignSecretKey;
     private String applicationCookieName;
     private String rawContent = "";
-    private SessionUser user;
     private String sessionId;
+    private SessionUser user;
 
     public Session(String rawContent) {
         this.rawContent = rawContent;
+        xStreamJSON.setMode(XStream.SINGLE_NODE_XPATH_RELATIVE_REFERENCES);
+        xStreamJSON.autodetectAnnotations(true);
     }
 
     public void fromCookie(String applicationCookieName, String cookieSignSecretKey) {
@@ -119,12 +125,7 @@ public class Session extends TreeMap<String, Serializable> {
     }
 
     public Map<String, String> getKeyValueMap() {
-        putEncrypt(SessionKeys.USER.getValue(),
-                SessionKeys.USERNAME.getValue() + "=" + getUser().getUsername() + ";" +
-                        SessionKeys.SESSION_ID.getValue() + "=" + getUser().getSessionId() + ";" +
-                        SessionKeys.IS_LOGGED.getValue() + "=" + String.valueOf(getUser().isLogged()) + ";" +
-                        SessionKeys.GROUP_NAMES.getValue() + "=" + String.valueOf(getUser().getGroups()) + ";"
-        );
+        putEncrypt(SessionKeys.USER.getValue(), xStreamJSON.toXML(getUser()));
         Map<String, String> keyValueMap = new HashMap<String, String>();
         String applicationCookieKeyValueString = "";
         for (String key : this.keySet()) {
@@ -208,26 +209,11 @@ public class Session extends TreeMap<String, Serializable> {
             if (containsKey(SessionKeys.USER.getValue()) && get(SessionKeys.USER.getValue()) != null) {
                 String encryptedUser = String.valueOf(get(SessionKeys.USER.getValue()));
                 String decryptedUser = decrypt(encryptedUser);
-                for (String keyValuePair : decryptedUser.split(";")) {
-                    String[] keyValue = splitFromFirst(keyValuePair, "=");
-                    if (keyValue.length == 2) {
-                        if (SessionKeys.USERNAME.getValue().equalsIgnoreCase(keyValue[0])) {
-                            user.setUsername("null".equalsIgnoreCase(keyValue[1]) ? null : keyValue[1]);
-                        } else if (SessionKeys.SESSION_ID.getValue().equalsIgnoreCase(keyValue[0])) {
-                            user.setSessionId("null".equalsIgnoreCase(keyValue[1]) ? null : keyValue[1]);
-                        } else if (SessionKeys.IS_LOGGED.getValue().equalsIgnoreCase(keyValue[0])) {
-                            user.setLogged("true".equalsIgnoreCase(keyValue[1]));
-                        } else if (SessionKeys.GROUP_NAMES.getValue().equalsIgnoreCase(keyValue[0])) {
-                            String groupNames = keyValue[1];
-                            groupNames = groupNames.substring(1, groupNames.length() - 1).trim();//will remove '[' and ']'
-                            for (String groupName : groupNames.split(",")) {
-                                if (!groupName.trim().isEmpty()) {
-                                    user.getGroups().add(groupName.trim());
-                                }
-                            }
-                        }
-                    }
-                }
+                XStream xStreamJSON = new XStream(new JettisonMappedXmlDriver());
+                xStreamJSON.setMode(XStream.SINGLE_NODE_XPATH_RELATIVE_REFERENCES);
+                xStreamJSON.autodetectAnnotations(true);
+                xStreamJSON.setClassLoader(Session.class.getClassLoader());
+                user = (SessionUser) xStreamJSON.fromXML(decryptedUser);
             }
         }
         return user;

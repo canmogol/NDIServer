@@ -1,7 +1,6 @@
 package com.ndi.app.model;
 
 import com.fererlab.dto.Model;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -11,7 +10,6 @@ import java.io.Serializable;
  * The persistent class for the DEPARTMENT database table.
  */
 @Entity
-@XStreamAlias("department")
 @NamedQueries({
         @NamedQuery(name = "Department.findAll", query = "SELECT d FROM Department d"),
         @NamedQuery(name = "Department.findName", query = "SELECT d FROM Department d where d.name=:name")
