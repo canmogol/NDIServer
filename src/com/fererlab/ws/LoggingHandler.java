@@ -1,94 +1,68 @@
 package com.fererlab.ws;
 
+import com.fererlab.db.EM;
+import com.fererlab.dto.AuditLogModel;
+import org.w3c.dom.Document;
 
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPMessage;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * acm
  */
 public class LoggingHandler implements SOAPHandler<SOAPMessageContext> {
 
-    private long out;
+    private Date outMessageDate;
+    private Date inMessageDate;
+    private AuditLogModel auditLog;
 
     @Override
-    public void close(MessageContext arg0) {
-        System.out.println("------------------ closed " + (new Date().getTime() - out) + " msec");
+    public void close(MessageContext messageContext) {
+        if (outMessageDate != null) {
+            log("------ out closed " + (new Date().getTime() - outMessageDate.getTime()) + " msec ");
+        } else if (inMessageDate != null) {
+            log("------ in closed " + (new Date().getTime() - inMessageDate.getTime()) + " msec");
+        }
+        outMessageDate = null;
+        inMessageDate = null;
     }
 
     @Override
     public boolean handleFault(SOAPMessageContext context) {
-        System.out.println("------------------ handleFault");
+        String soapMessage = messageToString(context);
         try {
-            SOAPMessage message = context.getMessage();
-            System.out.println("------------------ message: " + message);
-            SOAPHeader header = message.getSOAPHeader();
-            System.out.println("------------------ header: " + header);
-            SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
-            System.out.println("------------------ envelope: " + envelope);
-        } catch (SOAPException e) {
-            e.printStackTrace();
+            log("------ handleFault");
+            SOAPHeader header = context.getMessage().getSOAPHeader();
+            SOAPEnvelope envelope = context.getMessage().getSOAPPart().getEnvelope();
+            log("------ message: " + soapMessage);
+            log("------ header: " + header);
+            log("------ envelope: " + envelope);
+        } catch (Exception e) {
         }
-
-        boolean outbound = (Boolean) context.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
-        if (outbound) {
-            System.out.println("------------------ Direction=outbound");
-        } else {
-            System.out.println("------------------ Direction=inbound");
-        }
-        if (!outbound) {
-            try {
-                SOAPMessage msg = context.getMessage();
-                dumpSOAPMessage(msg);
-                if (context.getMessage().getSOAPBody().getFault() != null) {
-                    String detailName;
-                    try {
-                        detailName = context.getMessage().getSOAPBody().getFault().getDetail().getFirstChild().getLocalName();
-                        System.out.println("------------------ detailName=" + detailName);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            } catch (SOAPException e) {
-                e.printStackTrace();
-            }
-        }
-
+        updateIntegrationPointLog(context, soapMessage);
         return true;
     }
 
-    private void dumpSOAPMessage(SOAPMessage msg) {
-        if (msg == null) {
-            System.out.println("------------------ SOAP Message is NULL !!!");
-            return;
-        }
-        System.out.println("");
-        System.out.println("--------------------");
-        System.out.println("DUMP OF SOAP MESSAGE");
-        System.out.println("--------------------");
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            msg.writeTo(baos);
-            System.out.println(baos.toString(getMessageEncoding(msg)));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println("--------------------");
-        System.out.println("");
-    }
 
     private String getMessageEncoding(SOAPMessage msg) throws SOAPException {
         String encoding = "utf-8";
@@ -99,39 +73,99 @@ public class LoggingHandler implements SOAPHandler<SOAPMessageContext> {
     }
 
     @Override
-    public boolean handleMessage(SOAPMessageContext arg0) {
-        if ((Boolean) arg0.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY)) {
-            out = new Date().getTime();
-            System.out.println("------------ OUT handleMessage");
-        } else {
-            System.out.println("------------ IN handleMessage");
+    public boolean handleMessage(SOAPMessageContext context) {
+        String soapMessage = messageToString(context);
+        updateIntegrationPointLog(context, soapMessage);
+        try {
+            if (((Boolean) context.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY))) {
+                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+                InputStream inputStream = new ByteArrayInputStream(soapMessage.getBytes());
+                Document document = documentBuilder.parse(inputStream);
+
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+                StreamResult streamResult = new StreamResult(new StringWriter());
+                DOMSource domSource = new DOMSource(document);
+                transformer.transform(domSource, streamResult);
+                soapMessage = streamResult.getWriter().toString();
+            }
+        } catch (Exception e) {
         }
-        log(arg0);
+        log("\n" + soapMessage);
         return true;
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public Set<QName> getHeaders() {
-        System.out.println("------------------ getHeaders");
-        return Collections.EMPTY_SET;
-    }
-
-    private void log(SOAPMessageContext messageContext) {
+    private void updateIntegrationPointLog(SOAPMessageContext context, String soapMessage) {
         try {
-            SOAPMessage msg = messageContext.getMessage();
-            try {
-                msg.writeTo(System.out);
-                System.out.println("");
-            } catch (SOAPException ex) {
-                Logger.getLogger(LoggingHandler.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(LoggingHandler.class.getName()).log(Level.SEVERE, null, ex);
+            if ((Boolean) context.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY)) {
+                log("OUT handleMessage");
+                outMessageDate = new Date();
+                if (auditLog == null) {
+                    // our server is client, we will send the SOAP request
+                    auditLog = new AuditLogModel();
+                    auditLog.setType(AuditLogModel.AuditType.SERVER_REQUEST);
+                    auditLog.setClassName(context.get(MessageContext.WSDL_SERVICE).toString());
+                    auditLog.setMethodName(context.get(MessageContext.WSDL_INTERFACE).toString());
+                    auditLog.setRequest(soapMessage);
+                    auditLog.setUsername("localhost");
+                    EM.persist(auditLog);
+                } else {
+                    // our server is server, we are serving a web service here, someone called our service
+                    auditLog.setResponse(soapMessage);
+                    auditLog.setUpdatedDate(new Date());
+                    auditLog = EM.merge(auditLog);
+                    auditLog = null;
+
+                }
+            } else {
+                log("IN handleMessage");
+                inMessageDate = new Date();
+                if (auditLog == null) {
+                    // our server is server, we are serving a web service here, someone called our service
+                    auditLog = new AuditLogModel();
+                    auditLog.setType(AuditLogModel.AuditType.SERVER_REQUEST);
+                    auditLog.setClassName(context.get(MessageContext.WSDL_SERVICE).toString());
+                    auditLog.setMethodName(context.get(MessageContext.WSDL_INTERFACE).toString());
+                    auditLog.setRequest(soapMessage);
+                    auditLog.setUsername("localhost");
+                    EM.persist(auditLog);
+                } else {
+                    // our server is client, we got the response, save it and set it to null
+                    auditLog.setResponse(soapMessage);
+                    auditLog.setUpdatedDate(new Date());
+                    auditLog = EM.merge(auditLog);
+                    auditLog = null;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    private void log(String log) {
+        System.out.println("--------------LoggingHandler[" + this.hashCode() + "][" + Thread.currentThread().getId() + "]: " + log);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Set<QName> getHeaders() {
+        log("------ getHeaders");
+        return Collections.EMPTY_SET;
+    }
+
+    private String messageToString(SOAPMessageContext messageContext) {
+        try {
+            SOAPMessage msg = messageContext.getMessage();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            msg.writeTo(out);
+            return out.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
-
-

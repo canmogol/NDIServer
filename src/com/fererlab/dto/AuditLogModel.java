@@ -25,6 +25,7 @@ public class AuditLogModel implements Serializable, Model {
     private String responseContent;
     private String requestUri;
     private String remoteIp;
+    private AuditType type;
 
     @Id
     @SequenceGenerator(name = "AUDIT_LOG_ID_GENERATOR", sequenceName = "SEQ_AUDIT_LOG", allocationSize = 10)
@@ -85,6 +86,10 @@ public class AuditLogModel implements Serializable, Model {
         return requestUri;
     }
 
+    public void setRequestUri(String requestUri) {
+        this.requestUri = requestUri;
+    }
+
     public void setRequest(String request) {
         this.request = request;
     }
@@ -134,8 +139,18 @@ public class AuditLogModel implements Serializable, Model {
         this.username = username;
     }
 
-    public void setRequestUri(String requestUri) {
-        this.requestUri = requestUri;
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "A_AUDIT_TYPE", nullable = false)
+    public AuditType getType() {
+        return type;
     }
 
+    public void setType(AuditType type) {
+        this.type = type;
+    }
+
+    public enum AuditType {
+        CLIENT_REQUEST,
+        SERVER_REQUEST
+    }
 }

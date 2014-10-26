@@ -422,8 +422,8 @@ public class ActionHandler {
                 }
             } else if ("db".equals(property("auditing"))) {
                 if (response == null) {
-                    ModelAction<AuditLogModel> auditLogModelAction = new ModelAction<AuditLogModel>(AuditLogModel.class);
                     auditLog = new AuditLogModel();
+                    auditLog.setType(AuditLogModel.AuditType.CLIENT_REQUEST);
                     auditLog.setClassName(auditClass);
                     auditLog.setMethodName(auditMethod);
                     auditLog.setUsername(request.getSession().getUser().getUsername());
