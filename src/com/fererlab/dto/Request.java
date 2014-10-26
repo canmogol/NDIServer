@@ -45,7 +45,7 @@ public class Request implements Serializable {
 
     public String getHeader(String key) {
         if (getHeaders() != null && getHeaders().containsKey(key)) {
-            return String.valueOf(getHeaders().get(key));
+            return String.valueOf(getHeaders().get(key).getValue());
         } else {
             return null;
         }
@@ -56,7 +56,6 @@ public class Request implements Serializable {
         return "Request{" +
                 "headers=" + headers +
                 ", params=" + params +
-                ", session=" + session +
                 '}';
     }
 }

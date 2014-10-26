@@ -29,7 +29,7 @@ public class Department implements Serializable, Model {
 
 
     @Id
-    @SequenceGenerator(name = "DEPARTMENT_ID_GENERATOR", sequenceName = "SEQ_DEPARTMENT")
+    @SequenceGenerator(name = "DEPARTMENT_ID_GENERATOR", sequenceName = "SEQ_DEPARTMENT", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "DEPARTMENT_ID_GENERATOR")
     public Long getId() {
         return this.id;

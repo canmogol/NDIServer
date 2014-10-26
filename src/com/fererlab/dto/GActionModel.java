@@ -18,7 +18,7 @@ public class GActionModel implements Serializable, Model {
     private Date updateDate = new Date();
 
     @Id
-    @SequenceGenerator(name = "GACTION_ID_GENERATOR", sequenceName = "SEQ_GACTIONMODEL")
+    @SequenceGenerator(name = "GACTION_ID_GENERATOR", sequenceName = "SEQ_GACTIONMODEL", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "GACTION_ID_GENERATOR")
     public Long getId() {
         return this.id;

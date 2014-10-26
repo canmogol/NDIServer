@@ -1,6 +1,7 @@
 package com.fererlab.map;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class AuthenticationAuthorizationMap extends HashMap<String, Map<String, 
         return instance;
     }
 
-    public void readAuthenticationAuthorizationMap(URL file) {
+    public void readAuthenticationAuthorizationMap(String directoryName) {
         /*
         # URI               HTTP METHOD(s)              User
         /welcome            [*]                         *
@@ -35,18 +36,15 @@ public class AuthenticationAuthorizationMap extends HashMap<String, Map<String, 
         com.app.action.SomeAction       login           admin,system
         com.app.action.GenericAction        *               system
         */
-
-        // read ExecutionMap.properties
-        if (file == null) {
-            file = getClass().getClassLoader().getResource("AuthenticationAuthorizationMap.properties");
-        }
-        if (file != null) {
-            try {
+        try {
+            URL url = getClass().getClassLoader().getResource(directoryName);
+            if (url != null) {
                 String currentLine;
-                FileReader fileReader = new FileReader(file.getFile());
+                File aaPropertiesFile = new File(url.getPath() + "/AuthenticationAuthorizationMap.properties");
+                FileReader fileReader = new FileReader(aaPropertiesFile);
                 BufferedReader bufferedReader = new BufferedReader(fileReader);
                 while ((currentLine = bufferedReader.readLine()) != null) {
-                    if (currentLine.trim().isEmpty() || currentLine.startsWith("#")){
+                    if (currentLine.trim().isEmpty() || currentLine.startsWith("#")) {
                         continue;
                     }
                     /*
@@ -121,11 +119,11 @@ public class AuthenticationAuthorizationMap extends HashMap<String, Map<String, 
                     }
                 }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
 
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

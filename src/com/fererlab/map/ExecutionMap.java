@@ -3,9 +3,8 @@ package com.fererlab.map;
 import com.fererlab.dto.Param;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.URL;
 import java.util.Comparator;
 import java.util.Map;
@@ -28,8 +27,8 @@ public class ExecutionMap extends TreeMap<String, Map<String, Param<String, Stri
         return instance;
     }
 
-    public void readUriExecutionMap(URL file) {
-         /*
+    public void readUriExecutionMap(String directoryName) {
+        /*
         request method      ->    uri                ->   className, method
         GET                 ->    /welcome           ->   com.sample.app.action.MainAction, welcome       welcomeTemplate
         POST                ->    /product/details   ->   com.sample.app.action.ProductCRUDAction, details
@@ -48,14 +47,13 @@ public class ExecutionMap extends TreeMap<String, Map<String, Param<String, Stri
             }
         };
 
-        // read ExecutionMap.properties
-        if (file == null) {
-            file = getClass().getClassLoader().getResource("ExecutionMap.properties");
-        }
-        if (file != null) {
-            try {
+        try {
+            URL url = getClass().getClassLoader().getResource(directoryName);
+            if (url != null) {
+                // first load the project.properties file
                 String currentLine;
-                FileReader fileReader = new FileReader(file.getFile());
+                File executionPropertiesFile = new File(url.getPath() + "/ExecutionMap.properties");
+                FileReader fileReader = new FileReader(executionPropertiesFile);
                 BufferedReader bufferedReader = new BufferedReader(fileReader);
                 while ((currentLine = bufferedReader.readLine()) != null) {
                     /*
@@ -113,14 +111,10 @@ public class ExecutionMap extends TreeMap<String, Map<String, Param<String, Stri
                         }
                     }
                 }
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
     }
 
     @Override

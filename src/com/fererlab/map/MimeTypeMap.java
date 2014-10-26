@@ -1,5 +1,6 @@
 package com.fererlab.map;
 
+import java.io.File;
 import java.io.FileReader;
 import java.net.URL;
 import java.util.HashMap;
@@ -22,21 +23,24 @@ public class MimeTypeMap extends HashMap<String, String> {
         return instance;
     }
 
-    public void readMimeTypeMap(URL mimeTypeMapFile) {
-        try {
-            Properties properties = new Properties();
-            properties.load(new FileReader(mimeTypeMapFile.getFile()));
-            for (Object key : properties.keySet()) {
-                String valueString = String.valueOf(properties.get(key));
-                String[] values = valueString.split(" ");
-                for (String value : values) {
-                    this.put(value.trim(), String.valueOf(key).trim());
+    public void readMimeTypeMap(String directoryName) {
+        URL url = getClass().getClassLoader().getResource(directoryName);
+        if (url != null) {
+            try {
+                File mimeTypeMapFile = new File(url.getPath() + "/MimeTypesMap.properties");
+                Properties properties = new Properties();
+                properties.load(new FileReader(mimeTypeMapFile));
+                for (Object key : properties.keySet()) {
+                    String valueString = String.valueOf(properties.get(key));
+                    String[] values = valueString.split(" ");
+                    for (String value : values) {
+                        this.put(value.trim(), String.valueOf(key).trim());
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
     }
 
     @Override

@@ -10,28 +10,26 @@ import com.fererlab.session.SessionUser;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * acm | 1/16/13
  */
 public class ActionHandler {
 
+    private final Logger logger = Logger.getLogger(getClass().getSimpleName());
+
     private ExecutionMap executionMap = ExecutionMap.getInstance();
     private AuthenticationAuthorizationMap authenticationAuthorizationMap = AuthenticationAuthorizationMap.getInstance();
     private MimeTypeMap mimeTypeMap = MimeTypeMap.getInstance();
     private CacheMap cacheMap = CacheMap.getInstance();
     private ContextMap contextMap = ContextMap.getInstance();
-    private Map<String, List<String>> uriGroupNames = new HashMap<String, List<String>>();
+    private AuditMap auditMap = AuditMap.getInstance();
 
-    public ActionHandler(URL executionMapFile, URL authenticationAuthorizationMapFile, URL mimeTypeMapFile, URL cacheMapFile, URL contextFile) {
-        executionMap.readUriExecutionMap(executionMapFile);
-        authenticationAuthorizationMap.readAuthenticationAuthorizationMap(authenticationAuthorizationMapFile);
-        mimeTypeMap.readMimeTypeMap(mimeTypeMapFile);
-        cacheMap.readCacheMap(cacheMapFile);
-        contextMap.readContextMap(contextFile);
-    }
+    private Map<String, List<String>> uriGroupNames = new HashMap<String, List<String>>();
+    private AuditLogModel auditLog;
 
     public Response runAction(final Request request) {
 
@@ -99,10 +97,10 @@ public class ActionHandler {
                 }
                 //   GAction action
                 className = GAction.class.getName();
-                methodName = "runGroovy";
+                methodName = GAction.GROOVY_METHOD_NAME;
                 templateName = null;
-                request.getParams().addParam(new Param<String, Object>("dynamicClassName", dynamicClassName));
-                request.getParams().addParam(new Param<String, Object>("dynamicMethodName", dynamicMethodName));
+                request.getParams().addParam(new Param<String, Object>(GAction.DYNAMIC_CLASS_NAME, dynamicClassName));
+                request.getParams().addParam(new Param<String, Object>(GAction.DYNAMIC_METHOD_NAME, dynamicMethodName));
             }
         }
 
@@ -340,6 +338,9 @@ public class ActionHandler {
                     }
                 }
 
+                // audit the log with request
+                audit(request, null, requestURI, actionClass, method, requestMethod);
+
                 // check if the method is transactional
                 if (method.getAnnotation(Transactional.class) != null) {
                     EM.getEntityManager().getTransaction().begin();
@@ -352,6 +353,9 @@ public class ActionHandler {
                 if (method.getAnnotation(Transactional.class) != null) {
                     EM.getEntityManager().getTransaction().commit();
                 }
+
+                // audit the log with response
+                audit(request, response, requestURI, actionClass, method, requestMethod);
 
                 // return response
                 return response;
@@ -383,6 +387,64 @@ public class ActionHandler {
 
     }
 
+    private void audit(Request request, Response response, String requestURI, Class<?> actionClass, Method method, String requestMethod) {
+        // project.properties should have an auditing entry with "logger,db,none" option
+        Boolean auditing = false;
+        String auditClass = actionClass.getName();
+        String auditMethod = method.getName();
+        //      /-/Department/listModelAll
+        if (GAction.class.getName().equals(auditClass)
+                && GAction.GROOVY_METHOD_NAME.equals(auditMethod)) {
+            auditClass = String.valueOf(request.getParam(GAction.DYNAMIC_CLASS_NAME).getValue());
+            auditMethod = String.valueOf(request.getParam(GAction.DYNAMIC_METHOD_NAME).getValue());
+        }
+        //      #/user/login         [GET,POST]
+        if (auditMap.containsKey("*") || auditMap.containsKey(requestMethod)) {
+            List<String> uris = new ArrayList<String>();
+            if (auditMap.get("*") != null) {
+                uris.addAll(auditMap.get("*"));
+            }
+            if (auditMap.get(requestMethod) != null) {
+                uris.addAll(auditMap.get(requestMethod));
+            }
+            if (uris.contains(requestURI) || auditMap.containsKey(auditClass)) {
+                auditing = true;
+            }
+        }
+        // auditing is enabled for this URI
+        if (auditing) {
+            if ("logger".equals(property("auditing"))) {
+                if (response == null) {
+                    auditLog = new AuditLogModel();
+                    logger.log(Level.INFO, "AUDIT: " + auditLog.getCreateDate() + ", class: " + auditClass + ", method: " + auditMethod + ", user: " + request.getSession().getUser() + ", request: " + request);
+                } else {
+                    logger.log(Level.INFO, "AUDIT: " + auditLog.getCreateDate() + ", class: " + auditClass + ", method: " + auditMethod + ", user: " + request.getSession().getUser() + ", response: " + response);
+                }
+            } else if ("db".equals(property("auditing"))) {
+                if (response == null) {
+                    ModelAction<AuditLogModel> auditLogModelAction = new ModelAction<AuditLogModel>(AuditLogModel.class);
+                    auditLog = new AuditLogModel();
+                    auditLog.setClassName(auditClass);
+                    auditLog.setMethodName(auditMethod);
+                    auditLog.setUsername(request.getSession().getUser().getUsername());
+                    auditLog.setRemoteIp(request.getHeader(RequestKeys.REMOTE_IP.getValue()));
+                    auditLog.setGroups(request.getSession().getUser().getGroups().toString());
+                    auditLog.setRequest(request.toString());
+                    auditLog.setRequestUri(request.get(RequestKeys.URI.getValue()));
+                    EM.persist(auditLog);
+                    logger.log(Level.INFO, "AUDIT: done request, " + auditLog.getId());
+                } else {
+                    auditLog.setResponse(response.toString());
+                    auditLog.setResponseContent(new String(response.getContent()));
+                    auditLog.setUpdatedDate(new Date());
+                    auditLog = EM.merge(auditLog);
+                    logger.log(Level.INFO, "AUDIT: done response, " + auditLog.getId());
+                    auditLog = null;
+                }
+            }
+        }
+    }
+
     public ExecutionMap getExecutionMap() {
         return executionMap;
     }
@@ -402,4 +464,13 @@ public class ActionHandler {
     public ContextMap getContextMap() {
         return contextMap;
     }
+
+    public AuditMap getAuditMap() {
+        return auditMap;
+    }
+
+    public String property(String key) {
+        return ProjectProperties.getInstance().get(key);
+    }
+
 }

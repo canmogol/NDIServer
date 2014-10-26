@@ -73,7 +73,6 @@ public class Response implements Serializable {
     public String toString() {
         return "Response{" +
                 "headers=" + headers +
-                ", session=" + session +
                 ", status=" + status +
                 '}';
     }

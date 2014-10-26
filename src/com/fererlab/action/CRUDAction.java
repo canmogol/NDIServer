@@ -23,7 +23,11 @@ public interface CRUDAction<T extends Model> extends Action {
 
     public Long findCount();
 
+    public T create(Object... keyValueList) throws Exception;
+
     public T create(ParamMap<String, Param<String, Object>> keyValuePairs) throws Exception;
+
+    public T update(Object id, Object... keyValueList) throws Exception;
 
     public T update(Object id, ParamMap<String, Param<String, Object>> keyValuePairs) throws Exception;
 

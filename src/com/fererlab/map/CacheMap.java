@@ -2,6 +2,7 @@ package com.fererlab.map;
 
 import com.fererlab.cache.Cache;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
@@ -24,13 +25,17 @@ public class CacheMap {
         return instance;
     }
 
-    public void readCacheMap(URL cacheMapFile) {
-        try {
-            Properties properties = new Properties();
-            properties.load(new FileReader(cacheMapFile.getFile()));
-            Cache.create(properties);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void readCacheMap(String directoryName) {
+        URL url = getClass().getClassLoader().getResource(directoryName);
+        if (url != null) {
+            try {
+                File cacheMapFile = new File(url.getPath() + "/CacheMap.properties");
+                Properties properties = new Properties();
+                properties.load(new FileReader(cacheMapFile));
+                Cache.create(properties);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

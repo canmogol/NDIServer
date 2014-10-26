@@ -22,6 +22,10 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class GAction extends BaseAction {
 
+    public static final String GROOVY_METHOD_NAME = "runGroovy";
+    public static final String DYNAMIC_CLASS_NAME = "dynamicClassName";
+    public static final String DYNAMIC_METHOD_NAME = "dynamicMethodName";
+
     String startParameterDev = null;
     String startParameterSource = null;
 

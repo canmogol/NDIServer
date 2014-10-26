@@ -3,8 +3,7 @@ package com.fererlab.app;
 import com.fererlab.action.ActionHandler;
 import com.fererlab.dto.Request;
 import com.fererlab.dto.Response;
-import com.fererlab.map.MessageProperties;
-import com.fererlab.map.ProjectProperties;
+import com.fererlab.map.*;
 
 /**
  * acm
@@ -12,20 +11,21 @@ import com.fererlab.map.ProjectProperties;
 public abstract class BaseApplication implements Application {
 
     private EApplicationMode mode;
-    private ActionHandler actionHandler = new ActionHandler(
-            getClass().getClassLoader().getResource("ExecutionMap.properties"),
-            getClass().getClassLoader().getResource("AuthenticationAuthorizationMap.properties"),
-            getClass().getClassLoader().getResource("MimeTypesMap.properties"),
-            getClass().getClassLoader().getResource("CacheMap.properties"),
-            getClass().getClassLoader().getResource("ContextMap.properties")
-    );
+    private ActionHandler actionHandler = new ActionHandler();
 
     @Override
     public void setMode(EApplicationMode mode) {
         this.mode = mode;
         String suffix = EApplicationMode.DEVELOPMENT.equals(mode) ? ".dev" : (EApplicationMode.TESTING.equals(mode) ? ".test" : "");
-        ProjectProperties.getInstance().readProjectProperties(getClass().getSimpleName().toLowerCase(), suffix);
-        MessageProperties.getInstance().readMessageProperties(getClass().getSimpleName().toLowerCase());
+        String directoryName = getClass().getSimpleName().toLowerCase();
+        ProjectProperties.getInstance().readProjectProperties(directoryName, suffix);
+        MessageProperties.getInstance().readMessageProperties(directoryName);
+        ExecutionMap.getInstance().readUriExecutionMap(directoryName);
+        AuthenticationAuthorizationMap.getInstance().readAuthenticationAuthorizationMap(directoryName);
+        MimeTypeMap.getInstance().readMimeTypeMap(directoryName);
+        CacheMap.getInstance().readCacheMap(directoryName);
+        ContextMap.getInstance().readContextMap(directoryName);
+        AuditMap.getInstance().readAuditMap(directoryName);
     }
 
     public EApplicationMode getMode() {

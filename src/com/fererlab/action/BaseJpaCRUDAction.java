@@ -246,6 +246,15 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
         return (Long) query.getSingleResult();
     }
 
+    public T create(Object... keyValueList) throws Exception {
+        ParamMap<String, Param<String, Object>> paramMap = new ParamMap<String, Param<String, Object>>();
+        for (int i = 0; i < keyValueList.length; i = i + 2) {
+            String key = String.valueOf(keyValueList[i]);
+            paramMap.put(key, new Param<String, Object>(key, keyValueList[i + 1]));
+        }
+        return create(paramMap);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public T create(ParamMap<String, Param<String, Object>> keyValuePairs) throws Exception {
@@ -318,6 +327,15 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
             throw e;
         }
         return t;
+    }
+
+    public T update(Object id, Object... keyValueList) throws Exception {
+        ParamMap<String, Param<String, Object>> paramMap = new ParamMap<String, Param<String, Object>>();
+        for (int i = 0; i < keyValueList.length; i = i + 2) {
+            String key = String.valueOf(keyValueList[i]);
+            paramMap.put(key, new Param<String, Object>(key, keyValueList[i + 1]));
+        }
+        return update(id, paramMap);
     }
 
     @Override

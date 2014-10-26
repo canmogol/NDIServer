@@ -107,6 +107,7 @@ public class ServerServlet extends HttpServlet {
         headers.addParam(new Param<String, Object>(RequestKeys.HOST.getValue(), domain));
         headers.addParam(new Param<String, Object>(RequestKeys.HOST_NAME.getValue(), domain));
         headers.addParam(new Param<String, Object>(RequestKeys.HOST_PORT.getValue(), port));
+        headers.addParam(new Param<String, Object>(RequestKeys.REMOTE_IP.getValue(), getRemoteIpAddress(request)));
 
         Enumeration headerKeys = request.getHeaderNames();
         while (headerKeys.hasMoreElements()) {
@@ -223,5 +224,25 @@ public class ServerServlet extends HttpServlet {
     public void destroy() {
         applicationDescriptionHandler.stopApplications();
         super.destroy();
+    }
+
+    private String getRemoteIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip != null ? ip : "";
     }
 }

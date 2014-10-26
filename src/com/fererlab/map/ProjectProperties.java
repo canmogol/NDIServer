@@ -2,6 +2,7 @@ package com.fererlab.map;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Properties;
@@ -28,24 +29,23 @@ public class ProjectProperties extends HashMap<String, String> {
             URL url = getClass().getClassLoader().getResource(directoryName);
             if (url != null) {
                 // first load the project.properties file
-                File projectPropertiesFile = new File(url.getPath() + "/project.properties");
-                Properties properties = new Properties();
-                properties.load(new FileReader(projectPropertiesFile));
-                for (Object key : properties.keySet()) {
-                    put(String.valueOf(key), String.valueOf(properties.get(key)));
-                }
-                if(suffix != null && !suffix.isEmpty()){
-                    // then load the project.SUFFIX.properties file to override the default values
-                    projectPropertiesFile = new File(url.getPath() + "/project" + suffix + ".properties");
-                    properties = new Properties();
-                    properties.load(new FileReader(projectPropertiesFile));
-                    for (Object key : properties.keySet()) {
-                        put(String.valueOf(key), String.valueOf(properties.get(key)));
-                    }
+                readFile(url.getPath() + "/project.properties");
+                if (suffix != null && !suffix.isEmpty()) {
+                    // load dev, test etc. properties
+                    readFile(url.getPath() + "/project" + suffix + ".properties");
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void readFile(String filePath) throws IOException {
+        File projectPropertiesFile = new File(filePath);
+        Properties properties = new Properties();
+        properties.load(new FileReader(projectPropertiesFile));
+        for (Object key : properties.keySet()) {
+            put(String.valueOf(key), String.valueOf(properties.get(key)));
         }
     }
 
