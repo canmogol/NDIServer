@@ -24,7 +24,6 @@ public class ActionHandler {
     private ExecutionMap executionMap = ExecutionMap.getInstance();
     private AuthenticationAuthorizationMap authenticationAuthorizationMap = AuthenticationAuthorizationMap.getInstance();
     private MimeTypeMap mimeTypeMap = MimeTypeMap.getInstance();
-    private CacheMap cacheMap = CacheMap.getInstance();
     private ContextMap contextMap = ContextMap.getInstance();
     private AuditMap auditMap = AuditMap.getInstance();
 
@@ -204,8 +203,12 @@ public class ActionHandler {
             user.getGroups().add(everybody);
         }
 
+        // if the authentication/authorization map is empty, it means the application has no access rule
+        if (authenticationAuthorizationMap.isEmpty()) {
+            userAuthorized = true;
+        }
         // check the AuthenticationAuthorizationMap contains requestMethod
-        if (authenticationAuthorizationMap.containsKey(requestMethod)
+        else if (authenticationAuthorizationMap.containsKey(requestMethod)
                 || authenticationAuthorizationMap.containsKey("*")) {
 
             if (uriGroupNames.isEmpty()) {
@@ -443,30 +446,6 @@ public class ActionHandler {
                 }
             }
         }
-    }
-
-    public ExecutionMap getExecutionMap() {
-        return executionMap;
-    }
-
-    public AuthenticationAuthorizationMap getAuthenticationAuthorizationMap() {
-        return authenticationAuthorizationMap;
-    }
-
-    public MimeTypeMap getMimeTypeMap() {
-        return mimeTypeMap;
-    }
-
-    public CacheMap getCacheMap() {
-        return cacheMap;
-    }
-
-    public ContextMap getContextMap() {
-        return contextMap;
-    }
-
-    public AuditMap getAuditMap() {
-        return auditMap;
     }
 
     public String property(String key) {
