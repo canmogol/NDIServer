@@ -60,7 +60,7 @@ public class ApplicationDescriptionHandler {
 
             // check if the request done for the default application
             if (key == null) {
-                key = applicationPathMap.get("default.application");
+                key = getDefaultApplication();
             }
 
             // this application will be reloaded at every request
@@ -352,8 +352,13 @@ public class ApplicationDescriptionHandler {
     }
 
     public void stopApplications() {
-        for(Application application : applicationsMap.values()){
+        for (Application application : applicationsMap.values()) {
             application.stop();
         }
     }
+
+    public String getDefaultApplication() {
+        return applicationPathMap.get("default.application");
+    }
+
 }

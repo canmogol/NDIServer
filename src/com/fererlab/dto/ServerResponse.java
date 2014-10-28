@@ -26,6 +26,11 @@ public class ServerResponse {
         header.add("message", message);
     }
 
+    public ServerResponse header(String key, Object value) {
+        header.add(key, value);
+        return this;
+    }
+
     public ServerResponse add(String key, Object value) {
         content.add(key, value);
         return this;
@@ -36,28 +41,16 @@ public class ServerResponse {
         return this;
     }
 
-    public Pair<String, Object> getPair() {
+    public Pair<String, Object> getHeader() {
         return header;
-    }
-
-    public void setPair(Pair<String, Object> header) {
-        this.header = header;
     }
 
     public Pair<String, Object> getContent() {
         return content;
     }
 
-    public void setContent(Pair<String, Object> content) {
-        this.content = content;
-    }
-
     public Pair<String, Object> getException() {
         return exception;
-    }
-
-    public void setException(Pair<String, Object> exception) {
-        this.exception = exception;
     }
 
     @Override

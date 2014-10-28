@@ -18,6 +18,11 @@ public abstract class ActionResponse {
             this.serverResponse = serverResponse;
         }
 
+        public PrepareResponse header(String key, Object value) {
+            serverResponse.header(key, value);
+            return this;
+        }
+
         public PrepareResponse add(String key, Object value) {
             serverResponse.add(key, value);
             return this;
