@@ -24,6 +24,13 @@ public class ApplicationHandler {
                 applicationName = uriParts[1].trim();
             }
             applicationName = applicationName.startsWith("/") ? applicationName : "/" + applicationName;
+            request.getParams().put(
+                    RequestKeys.APPLICATION_URI.getValue(),
+                    new Param<String, Object>(
+                            RequestKeys.APPLICATION_URI.getValue(),
+                            projectName == null ? applicationName : "/" + projectName + applicationName
+                    ));
+
             // change the request URI for application to handle request correctly
             String currentRequestURI = request.getParams().getValue(RequestKeys.URI.getValue()).toString();
             String uriStartsWith = projectName == null ? "/" + applicationName : "/" + projectName + applicationName;

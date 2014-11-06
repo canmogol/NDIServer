@@ -1,6 +1,5 @@
 package com.fererlab.action;
 
-import com.fererlab.cache.Cache;
 import com.fererlab.db.EM;
 import com.fererlab.db.Transactional;
 import com.fererlab.dto.*;
@@ -8,7 +7,6 @@ import com.fererlab.map.*;
 import com.fererlab.session.Session;
 import com.fererlab.session.SessionUser;
 
-import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Level;
@@ -48,44 +46,7 @@ public class ActionHandler {
             requestURI = "/";
         }
 
-        // URI starting with /_/ indicates it is a resource but not an action
-        if (requestURI.startsWith("/_/") && requestURI.lastIndexOf("..") == -1) {
-
-            Map.Entry<byte[], String> entry = Cache.getContentIfCached(requestURI);
-            if (entry == null) {
-                // request URI is either one of these; xsl, css, js, image, file,
-                FileContentHandler fileContentHandler = new FileContentHandler();
-                byte[] content = new byte[0];
-                try {
-                    content = fileContentHandler.getContent(fileContentHandler.getContentPath(), requestURI);
-                } catch (FileNotFoundException e) {
-                    return new Response(
-                            new ParamMap<String, Param<String, Object>>(),
-                            request.getSession(),
-                            Status.STATUS_NOT_FOUND
-                    );
-                }
-                String extension = fileContentHandler.getFileExtension();
-                Map<byte[], String> contentAndExtension = new HashMap<byte[], String>();
-                contentAndExtension.put(content, extension);
-                entry = contentAndExtension.entrySet().iterator().next();
-                Cache.put(requestURI, entry);
-            }
-            Response response = new Response(
-                    new ParamMap<String, Param<String, Object>>(),
-                    request.getSession(),
-                    Status.STATUS_OK,
-                    entry.getKey()
-            );
-            response.getHeaders().put(
-                    ResponseKeys.RESPONSE_TYPE.getValue(),
-                    new Param<String, Object>(
-                            ResponseKeys.RESPONSE_TYPE.getValue(),
-                            mimeTypeMap.get(entry.getValue())
-                    )
-            );
-            return response;
-        } else if (requestURI.startsWith("/-/") && requestURI.lastIndexOf("..") == -1) {
+        if (requestURI.startsWith("/-/") && requestURI.lastIndexOf("..") == -1) {
             // run groovy actions
             String[] uriParts = requestURI.substring("/-/".length()).split("/");
             if (uriParts.length > 0) {
@@ -151,6 +112,27 @@ public class ActionHandler {
             // uriExecutionMap contains all the URI -> execution mapping for '*' request method
             Map<String, Param<String, String>> uriExecutionMap = executionMap.get("*");
 
+
+            boolean uriFound = false;
+            Set<String> uriSet = uriExecutionMap.keySet();
+            LinkedList<String> uriList = new LinkedList<String>(uriSet);
+            Collections.sort(uriList);
+            Iterator<String> iterator = uriList.descendingIterator();
+            while (iterator.hasNext()) {
+                String uri = iterator.next();
+                String searchUri = uri;
+                if (searchUri.endsWith("/**")) {
+                    searchUri = searchUri.substring(0, searchUri.length() - 3);
+                }
+                if (requestURI.startsWith(searchUri) && uri.length() > 3) {
+                    String restOfUri = uri.substring(uri.length() - 3);
+                    if (restOfUri.equals("/**")) {
+                        uriExecutionMap.put(requestURI, uriExecutionMap.get(uri));
+                        uriFound = true;
+                        break;
+                    }
+                }
+            }
             if (uriExecutionMap.containsKey(requestURI) || uriExecutionMap.containsKey(requestURI + "/")) {
                 //   com.sample.app.action.MainAction, welcome
                 Param<String, String> executionParam = uriExecutionMap.get(requestURI);

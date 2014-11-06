@@ -91,25 +91,15 @@ public class BaseAction extends ActionResponse implements Action {
     @Override
     public String toContent(Request request, Object... objects) {
 
-        // if RESPONSE_TYPE is defined and is XML return toMXL
-        if (request.getHeaders().containsKey(RequestKeys.RESPONSE_TYPE.getValue().toLowerCase())
-                && ((String) request.getHeaders().get(RequestKeys.RESPONSE_TYPE.getValue().toLowerCase()).getValue()).equalsIgnoreCase("xml")) {
-            request.getHeaders().addParam(new Param<String, Object>(RequestKeys.RESPONSE_TYPE.getValue(), "xml"));
-            if (objects.length > 1) {
-                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root>" + toXML(objects) + "</root>";
-            } else {
-                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + toXML(objects);
-            }
-        }
-
-        // else if RESPONSE_TEMPLATE exists return XML with template
-        else if (request.getParams().containsKey(RequestKeys.RESPONSE_TEMPLATE.getValue())) {
+        // RESPONSE_TEMPLATE exists return XML with template
+        if (!request.getHeaders().containsKey(RequestKeys.RESPONSE_TYPE.getValue().toLowerCase())
+                && request.getParams().containsKey(RequestKeys.RESPONSE_TEMPLATE.getValue())) {
             request.getHeaders().addParam(new Param<String, Object>(RequestKeys.RESPONSE_TYPE.getValue(), "xml"));
             StringBuilder responseContent = new StringBuilder();
             responseContent.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             responseContent.append("<?xml-stylesheet type=\"text/xsl\" href=\"")
                     .append(String.valueOf(request.getParams().getValue(RequestKeys.APPLICATION_URI.getValue())))
-                    .append("/_/xsl/")
+                    .append("/_/")
                     .append(String.valueOf(request.getParams().getValue(RequestKeys.RESPONSE_TEMPLATE.getValue())))
                     .append(".xsl")
                     .append("?")
@@ -123,6 +113,17 @@ public class BaseAction extends ActionResponse implements Action {
                 responseContent.append(toXML(objects));
             }
             return responseContent.toString();
+        }
+
+        // RESPONSE_TYPE is defined and is XML return toMXL
+        else if (request.getHeaders().containsKey(RequestKeys.RESPONSE_TYPE.getValue().toLowerCase())
+                && ((String) request.getHeaders().get(RequestKeys.RESPONSE_TYPE.getValue().toLowerCase()).getValue()).equalsIgnoreCase("xml")) {
+            request.getHeaders().addParam(new Param<String, Object>(RequestKeys.RESPONSE_TYPE.getValue(), "xml"));
+            if (objects.length > 1) {
+                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root>" + toXML(objects) + "</root>";
+            } else {
+                return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + toXML(objects);
+            }
         }
 
         // else return JSON

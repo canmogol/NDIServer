@@ -12,8 +12,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.logging.Logger;
 
 /**
  * acm
@@ -21,6 +23,7 @@ import java.util.Enumeration;
 public class ServerServlet extends HttpServlet {
 
     private ApplicationDescriptionHandler applicationDescriptionHandler = null;
+    private final Logger logger = Logger.getLogger(getClass().getSimpleName());
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -54,7 +57,6 @@ public class ServerServlet extends HttpServlet {
 
     private void handleRequest(HttpServletRequest req, HttpServletResponse resp) {
         try {
-
             log("new client connection accepted, will create connection object and start ConnectionHandler");
 
             // create connection object
@@ -87,6 +89,18 @@ public class ServerServlet extends HttpServlet {
         params.addParam(new Param<String, Object>(RequestKeys.REQUEST_METHOD.getValue(), request.getMethod()));
         params.addParam(new Param<String, Object>(RequestKeys.URI.getValue(), request.getRequestURI()));
         params.addParam(new Param<String, Object>(RequestKeys.PROTOCOL.getValue(), request.getProtocol()));
+
+        try {
+            String line;
+            StringBuilder postData = new StringBuilder();
+            BufferedReader reader = request.getReader();
+            while ((line = reader.readLine()) != null) {
+                postData.append(line);
+            }
+            params.addParam(new Param<String, Object>(RequestKeys.REQUEST_POST_DATA.getValue(), postData.toString()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         //  http://localhost:6000/js/loader/
         //  http
@@ -245,4 +259,9 @@ public class ServerServlet extends HttpServlet {
         }
         return ip != null ? ip : "";
     }
+
+    public void log(String log) {
+        logger.info(log);
+    }
+
 }
