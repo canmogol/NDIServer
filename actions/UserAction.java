@@ -7,12 +7,13 @@ import com.fererlab.ndi.Wire;
 import com.fererlab.session.SessionUser;
 import com.ndi.app.model.Department;
 import com.ndi.app.service.LDAPService;
+import com.ndi.app.service.LDAPServiceNoImpl;
 
 import java.util.List;
 
 public class UserAction extends BaseAction {
 
-    @Wire
+    @Wire(LDAPServiceNoImpl.class)
     private LDAPService ldapService;
 
     Response showUser(Request r) {

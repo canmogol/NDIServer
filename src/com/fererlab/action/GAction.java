@@ -51,7 +51,7 @@ public class GAction extends BaseAction {
                     // try to find the class
                     Class clazz = Class.forName(request.get("dynamicClassName") + "Action");
                     // and return response
-                    return createObjectReturnResponse(clazz, request, true);
+                    return createObjectReturnResponse(clazz, request);
                 } catch (Exception e) {
                     return Error(request, "no action class exists, class name: " + request.get("dynamicClassName")).exception(e).toResponse();
                 }
@@ -94,7 +94,7 @@ public class GAction extends BaseAction {
             GroovyClassLoader loader = new GroovyClassLoader(parent);
             Class clazz = loader.parseClass(content);
             // only for production, objects are singleton, others will reload for every request
-            return createGObjectReturnResponse(clazz, request, "production".equals(environment));
+            return createGObjectReturnResponse(clazz, request);
         } catch (Exception e) {
             e.printStackTrace();
             return Error(request, e.getMessage()).exception(e).toResponse();
@@ -154,16 +154,14 @@ public class GAction extends BaseAction {
     }
 
     private String findEnvironment(Request request) {
-        // set the predefined value as 'class'
         String current = "production";
-        String environment = current;
+        String environment;
         // check the java execution params for dev or prod values
         RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
         List<String> arguments = runtimeMxBean.getInputArguments();
         // it will be run only for the first request
         if (startParameterDev == null) {
             // this condition will met only once per lifecycle
-            startParameterDev = "";
             for (String arg : arguments) {
                 if (arg != null && arg.startsWith("-Dtarget.env=")) {
                     startParameterDev = arg.substring("-Dtarget.env=".length());
@@ -238,9 +236,9 @@ public class GAction extends BaseAction {
         return fileData.toString();
     }
 
-    private Response createObjectReturnResponse(Class clazz, Request request, boolean singleton) {
+    private Response createObjectReturnResponse(Class clazz, Request request) {
         // try to create the object from class
-        Object object = ContextMap.getInstance().getContext().getObject(clazz, singleton);
+        Object object = ContextMap.getInstance().getContext().getObject(clazz);
         // if it could not create the object, will return a proper error message
         if (object == null) {
             return Error(request, "No object created from this class: " + clazz.getName()).toResponse();
@@ -263,9 +261,9 @@ public class GAction extends BaseAction {
         return (Response) responseObject;
     }
 
-    private Response createGObjectReturnResponse(Class clazz, Request request, boolean singleton) {
+    private Response createGObjectReturnResponse(Class clazz, Request request) {
         // try to create the object from class
-        Object o = ContextMap.getInstance().getContext().getObject(clazz, singleton);
+        Object o = ContextMap.getInstance().getContext().getObject(clazz);
         // if it could not create the object, will return a proper error message
         if (o == null) {
             return Error(request, "No object created from this class: " + clazz.getName()).toResponse();

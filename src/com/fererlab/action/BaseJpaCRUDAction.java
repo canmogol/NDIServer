@@ -92,14 +92,11 @@ public class BaseJpaCRUDAction<T extends Model> extends BaseAction implements CR
         Integer limit = null;
         if (keyValuePairs != null) {
             // set offset, limit and orderBy any if exists
-            if (keyValuePairs.containsKey("start") && keyValuePairs.getValue("start") != null) {
-                start = Integer.valueOf(keyValuePairs.remove("start").getValue().toString());
+            if (keyValuePairs.containsKey("_start") && keyValuePairs.getValue("_start") != null) {
+                start = Integer.valueOf(keyValuePairs.remove("_start").getValue().toString());
             }
-            if (keyValuePairs.containsKey("page") && keyValuePairs.getValue("page") != null) {
-                keyValuePairs.remove("page");//removed from pairs, it remains in URL
-            }
-            if (keyValuePairs.containsKey("limit") && keyValuePairs.getValue("limit") != null) {
-                limit = Integer.valueOf(keyValuePairs.remove("limit").getValue().toString());
+            if (keyValuePairs.containsKey("_limit") && keyValuePairs.getValue("_limit") != null) {
+                limit = Integer.valueOf(keyValuePairs.remove("_limit").getValue().toString());
             }
             if (keyValuePairs.containsKey("_order") && keyValuePairs.getValue("_order") != null) {
                 orderBy = keyValuePairs.remove("_order").getValue().toString().trim().replace("%20", " ");

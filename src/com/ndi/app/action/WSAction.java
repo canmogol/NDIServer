@@ -3,27 +3,13 @@ package com.ndi.app.action;
 import com.fererlab.action.BaseAction;
 import com.fererlab.dto.Request;
 import com.fererlab.dto.Response;
-import com.fererlab.ws.LogHandlerResolver;
-import com.fererlab.ws.LoggingHandler;
-import net.webservicex.CurrencyConvertor;
-import net.webservicex.CurrencyConvertorSoap;
-
-import javax.xml.ws.Binding;
-import javax.xml.ws.BindingProvider;
-import javax.xml.ws.Service;
-import javax.xml.ws.handler.HandlerResolver;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.fererlab.ndi.Wire;
+import com.ndi.app.service.WSService;
 
 /**
  * acm
  */
 public class WSAction extends BaseAction {
-
-    private Map<String, ServiceMethod> serviceMethodMap = new HashMap<String, ServiceMethod>();
-    private CurrencyConvertorSoap currencyConvertorSoap;
 
     static {
         //for localhost testing only
@@ -36,100 +22,33 @@ public class WSAction extends BaseAction {
                 });
     }
 
-    public Response service(Request request) {
-        if (request.get("service") != null && request.get("method") != null) {
+    @Wire
+    private WSService wsService;
+
+    public Response service(Request r) {
+        // http://localhost:8080/srv/ws/service?service=net.webservicex.CurrencyConvertorSoap&method=conversionRate&args={%22list%22:[{%22net.webservicex.Currency%22:[%22EUR%22,%22USD%22]}]}
+        if (r.get("service") != null || r.get("method") != null) {
             try {
-                ServiceMethod serviceMethod = prepareServiceMethod(request);
+                String args = r.get("args").replace("%22", "\"");
+                Object argObject = getXStreamJSON().fromXML(args);
                 try {
-                    Object service = serviceMethod.getService().invoke(this);
-                    String args = request.get("args").replace("%22", "\"");
                     Object wsResponse;
-                    Object argObject = getXStreamJSON().fromXML(args);
-                    if (argObject instanceof List) {
-                        List argList = (List) argObject;
-                        Object[] argArray = argList.toArray();
-                        wsResponse = serviceMethod.getMethod().invoke(service, argArray);
-                    } else {
-                        wsResponse = serviceMethod.getMethod().invoke(service, argObject);
-                    }
-                    return Ok(request).add("data", wsResponse).toResponse();
+                    wsResponse = wsService.getWSResponse(
+                            r.get("service"),
+                            r.get("method"),
+                            argObject
+                    );
+                    return Ok(r).add("data", wsResponse).toResponse();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    return Error(request, "could not call method").exception(e).toResponse();
+                    return Error(r, "could not call method").exception(e).toResponse();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                return Error(request, "could not prepare service").exception(e).toResponse();
+                return Error(r, "could not prepare service").exception(e).toResponse();
             }
         }
-        return NotFound(request, "no method found").toResponse();
+        return NotFound(r, "service, method and args keywords not available").toResponse();
     }
 
-    private ServiceMethod prepareServiceMethod(Request request) throws Exception {
-        String serviceMethodKey = request.get("service") + "::" + request.get("method");
-        Method foundMethod = null;
-        if (!serviceMethodMap.containsKey(serviceMethodKey)) {
-            Method serviceMethod = findService(request.get("service"));
-            if (serviceMethod != null) {
-                String methodName = request.get("method");
-                for (Method method : serviceMethod.getReturnType().getDeclaredMethods()) {
-                    if (method.getName().equals(methodName)) {
-                        foundMethod = method;
-                        break;
-                    }
-                }
-                if (foundMethod == null) {
-                    throw new Exception("no method found");
-                }
-            } else {
-                throw new Exception("no service found");
-            }
-            serviceMethodMap.put(serviceMethodKey, new ServiceMethod(serviceMethod, foundMethod));
-        }
-        return serviceMethodMap.get(serviceMethodKey);
-    }
-
-    private Method findService(String service) {
-        for (Method method : this.getClass().getDeclaredMethods()) {
-            if (method.getReturnType().getName().equals(service)) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    public CurrencyConvertorSoap geCurrencyConvertor() {
-        if (currencyConvertorSoap == null) {
-            Service service = new CurrencyConvertor();
-            currencyConvertorSoap = service.getPort(CurrencyConvertorSoap.class);
-            BindingProvider bp = ((BindingProvider) currencyConvertorSoap);
-
-            // set logging handlers and connection/request timeouts
-            HandlerResolver handlerResolver = new LogHandlerResolver();
-            service.setHandlerResolver(handlerResolver);
-            Binding binding = bp.getBinding();
-            List<javax.xml.ws.handler.Handler> handlerList = binding.getHandlerChain();
-            handlerList.add(new LoggingHandler());
-            binding.setHandlerChain(handlerList);
-        }
-        return currencyConvertorSoap;
-    }
-
-    private class ServiceMethod {
-        private final Method service;
-        private final Method method;
-
-        public ServiceMethod(Method service, Method method) {
-            this.service = service;
-            this.method = method;
-        }
-
-        private Method getService() {
-            return service;
-        }
-
-        private Method getMethod() {
-            return method;
-        }
-    }
 }

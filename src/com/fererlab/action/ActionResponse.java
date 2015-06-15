@@ -2,6 +2,8 @@ package com.fererlab.action;
 
 import com.fererlab.dto.*;
 
+import java.util.Map;
+
 /**
  * acm
  */
@@ -62,6 +64,11 @@ public abstract class ActionResponse {
 
     public PrepareResponse Ok(Request request) {
         return Ok(request, "");
+    }
+
+    public PrepareResponse RequestHttp(String url, Map<String, String> headers, OutResponseHandler handler) {
+        // TODO add this to queue, after its response retrieved call handler.handle(response)
+        return new PrepareResponse(null, null, null);
     }
 
     public PrepareResponse Ok(Request request, String message) {

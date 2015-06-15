@@ -29,10 +29,15 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
 
     public Response find(Request request) {
         try {
-            T t = crudAction.find(request.get("id"));
-            return Ok(request, "record found")
-                    .add("data", t)
-                    .toResponse();
+            if (request.get("id") != null) {
+                Param<String, Object> idParam = clearKeyValuePairs(request.getParams()).get("id");
+                T t = crudAction.find(idParam.getValue());
+                return Ok(request, t == null ? "no record found" : "record found")
+                        .add("data", t)
+                        .toResponse();
+            } else {
+                throw new Exception("no parameter with key 'id' found");
+            }
         } catch (Exception e) {
             return Error(request, e.getMessage()).exception(e).toResponse();
         }
@@ -45,6 +50,7 @@ public class SupportCRUDAction<T extends Model> extends BaseAction {
             return Ok(request, "records found")
                     .add("data", list)
                     .add("totalCount", totalCount)
+                    .add("numberOfRecords", list.size())
                     .toResponse();
         } catch (Exception e) {
             return Error(request, e.getMessage()).exception(e).toResponse();
