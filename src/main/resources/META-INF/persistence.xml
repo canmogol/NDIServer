@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+    <persistence-unit name="db" transaction-type="RESOURCE_LOCAL">
+
+        <description>PGSQLDB Persistence Unit</description>
+        <!-- classes that are not added by JPA generation -->
+
+        <!-- entity objects may be defined as a jar file or they can be defined one by one -->
+        <!-- <jar-file>entities.jar</jar-file> -->
+        <!-- <class>com.app.model.MyEntity</class> -->
+        <!-- <class>sample.ndi.app.model.SomeClass</class> -->
+
+
+        <!-- if exclude-unlisted-classes is false or it is removed, then all the files in the classpath
+                annotated as Entity will be loaded -->
+        <!-- <exclude-unlisted-classes>true</exclude-unlisted-classes> -->
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
+
+        <properties>
+            <property name="hibernate.archive.autodetection" value="class, hbm"/>
+            <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost/ndi"/>
+            <property name="javax.persistence.jdbc.user" value="test"/>
+            <property name="javax.persistence.jdbc.password" value=""/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQL81Dialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="validate"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.transaction.flush_before_completion" value="true"/>
+            <property name="hibernate.temp.use_jdbc_metadata_defaults" value="false"/>
+            <property name="hibernate.default_schema" value="public"/>
+        </properties>
+    </persistence-unit>
+</persistence>
