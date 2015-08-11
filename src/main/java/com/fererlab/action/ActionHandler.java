@@ -46,7 +46,7 @@ public class ActionHandler {
             requestURI = "/";
         }
 
-        if (requestURI.startsWith("/-/") && requestURI.lastIndexOf("") == -1) {
+        if (requestURI.startsWith("/-/")) {
             // run groovy actions
             String[] uriParts = requestURI.substring("/-/".length()).split("/");
             if (uriParts.length > 0) {

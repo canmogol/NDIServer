@@ -16,17 +16,17 @@ public class UserAction extends BaseAction {
     @Wire(LDAPServiceNoImpl.class)
     private LDAPService ldapService;
 
-    Response showUser(Request r) {
-        return Ok(r).add("data", r.getSession().getUser()).toResponse();
+    public Response showUser(Request r) {
+        return Ok(r).add("data", r.getSession().getUser()).add("key1", "value1").toResponse();
     }
 
-    Response doLogout(Request r) {
+    public Response doLogout(Request r) {
         r.getSession().getUser().logout();
         return Ok(r).add("data", r.getSession().getUser()).toResponse();
     }
 
     @Transactional
-    Response doLogin(Request r) {
+    public Response doLogin(Request r) {
         if (ldapService.checkUsernamePassword(r.get("username"), r.get("password"))) {
             SessionUser user = r.getSession().getUser();
             user.setLogged(true);
@@ -42,7 +42,7 @@ public class UserAction extends BaseAction {
             user.getProperties().put("departments", departments);
             return Ok(r).add("data", user).add("welcome", message("welcome")).toResponse();
         } else {
-            return Error(r, "could not logged in").toResponse();
+            return Error(r, "could not logged in, username and password should be applied").toResponse();
         }
     }
 

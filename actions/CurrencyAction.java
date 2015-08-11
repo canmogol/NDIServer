@@ -11,7 +11,7 @@ public class CurrencyAction extends BaseAction {
     @Wire
     private WSService wsService;
 
-    Response convert(Request r) {
+    public Response convert(Request r) {
         try {
             Object argObject = getXStreamJSON().fromXML(r.get("args").replace("%22", "\""));
             Object wsResponse = wsService.getWSResponse(
@@ -25,11 +25,11 @@ public class CurrencyAction extends BaseAction {
         }
     }
 
-    Response test(Request request) {
+    public Response test(Request request) {
         return Error(request, "got exception :(").exception(new DateTimeException("No time for this!")).toResponse();
     }
 
-    Response list(Request request) {
+    public Response list(Request request) {
         getXStreamJSON().alias("currencyList", net.webservicex.Currency.class);
         return Ok(request)
                 .add("data", net.webservicex.Currency.values())
