@@ -21,8 +21,8 @@ public class MapConversionTest {
 
     public MapConversionTest() {
         xStreamJSON.setMode(XStream.SINGLE_NODE_XPATH_RELATIVE_REFERENCES);
-        //xStreamJSON.autodetectAnnotations(true);
-        runTests();
+//        xStreamJSON.autodetectAnnotations(true);
+//        runTests();
     }
 
     private void runTests() {
