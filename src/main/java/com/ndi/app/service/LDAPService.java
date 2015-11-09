@@ -8,6 +8,6 @@ import com.fererlab.ndi.Default;
 @Default(LDAPServiceTrueImpl.class)
 public interface LDAPService {
 
-    public boolean checkUsernamePassword(String Username, String password);
+    boolean checkUsernamePassword(String Username, String password);
 
 }

@@ -21,15 +21,15 @@ public class MapConversionTest {
 
     public MapConversionTest() {
         xStreamJSON.setMode(XStream.SINGLE_NODE_XPATH_RELATIVE_REFERENCES);
-        //xStreamJSON.autodetectAnnotations(true);
-        runTests();
+//        xStreamJSON.autodetectAnnotations(true);
+//        runTests();
     }
 
     private void runTests() {
-        Map<String, Object> properties = new HashMap<String, Object>();
-        ModelAction<Department> modelAction = new ModelAction<Department>(Department.class);
+        Map<String, Object> entityMap = new HashMap<>();
+        ModelAction<Department> modelAction = new ModelAction<>(Department.class);
         List<Department> departments = modelAction.findAll();
-        properties.put("departments", departments);
+        entityMap.put("departments", departments);
         SessionUser sessionUser = new SessionUser();
         sessionUser.setUsername("acm");
         sessionUser.setSessionId("b226ad60e2ac3a18c4641721da4e6338ba26837d");
@@ -37,7 +37,7 @@ public class MapConversionTest {
         sessionUser.getGroups().add("*");
         sessionUser.getGroups().add("user");
         sessionUser.getProperties().put("departments", departments);
-        String map = xStreamJSON.toXML(properties);
+        String map = xStreamJSON.toXML(entityMap);
         String user = xStreamJSON.toXML(sessionUser);
 
         Object objectMap = xStreamJSON.fromXML(map);

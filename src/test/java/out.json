@@ -1,0 +1,30 @@
+{
+  "map": [
+    {
+      "entry": {
+        "string": "departments",
+        "list": [
+          {
+            "com.ndi.app.model.Department": [
+              {
+                "id": 2,
+                "email": "s@s.com",
+                "name": "Sports"
+              },
+              {
+                "id": 3,
+                "email": "c@c.com",
+                "name": "Cycling"
+              },
+              {
+                "id": 1,
+                "email": "r@r.com",
+                "name": "Reading"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
