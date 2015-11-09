@@ -11,7 +11,5 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.FIELD)
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface Wire {
-    Class type() default Wire.class;
-
-    String name() default "";
+    public Class value() default Wire.class;
 }

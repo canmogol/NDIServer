@@ -1,7 +1,6 @@
 package com.fererlab.ndi;
 
-
-import org.apache.commons.lang.StringUtils;
+import com.sun.xml.internal.ws.util.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -12,8 +11,8 @@ import java.util.Map;
  */
 public class WireContext {
 
-    private Map<String, String> beans = new HashMap<>();
-    private Map<String, Object> singletons = new HashMap<>();
+    private Map<String, String> beans = new HashMap<String, String>();
+    private Map<String, Object> singletons = new HashMap<String, Object>();
 
     public WireContext(Map<String, String> beans) {
         this.beans.putAll(beans);
@@ -53,8 +52,8 @@ public class WireContext {
     private <T> T createObject(Class<T> t) {
         T instance = null;
         try {
+            String key = t.getPackage() + "." + t.getName();
             if (t.getAnnotation(Singleton.class) != null) {
-                String key = t.getName();
                 if (singletons.containsKey(key)) {
                     instance = (T) singletons.get(key);
                 } else {
@@ -75,48 +74,20 @@ public class WireContext {
     private <T> void fillWired(T instance) {
         for (Field field : instance.getClass().getDeclaredFields()) {
             Wire wired = field.getAnnotation(Wire.class);
-            Object fieldValue = null;
             if (wired != null) {
-                Class type = null;
-                if (!Wire.class.equals(wired.type())) {
-                    type = wired.type();
-                } else if (!"".equals(wired.name())) {
-                    try {
-                        type = Class.forName(wired.name());
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                } else if (!field.getType().isInterface()) {
-                    type = field.getType();
-                }
-                if (type != null) {
-                    fieldValue = getObject(field.getType(), type);
-                }
-            } else if (beans.containsKey(field.getType().getTypeName())) {
-                try {
-                    String defaultClassName = beans.get(field.getType().getTypeName());
-                    Class defaultClass = Class.forName(defaultClassName);
-                    fieldValue = getObject(field.getType(), defaultClass);
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (fieldValue != null) {
                 try {
                     field.setAccessible(true);
-                    field.set(instance, fieldValue);
+                    field.set(instance, getObject(field.getType(), wired.value()));
                 } catch (Exception e) {
                     try {
                         String methodName = "set" + StringUtils.capitalize(field.getName());
-                        instance.getClass().getMethod(methodName, field.getType()).invoke(instance, fieldValue);
+                        instance.getClass().getMethod(methodName, field.getType()).invoke(instance, getObject(field.getType(), wired.value()));
                     } catch (Exception ex) {
                         e.printStackTrace();
                         ex.printStackTrace();
                     }
                 }
             }
-
         }
     }
 

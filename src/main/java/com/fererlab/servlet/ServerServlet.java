@@ -82,13 +82,13 @@ public class ServerServlet extends HttpServlet {
     private void parseRequest(HttpServletRequest request, Connection connection) {
 
         // create headers and params maps
-        ParamMap<String, Param<String, Object>> headers = new ParamMap<>();
-        ParamMap<String, Param<String, Object>> params = new ParamMap<>();
+        ParamMap<String, Param<String, Object>> headers = new ParamMap<String, Param<String, Object>>();
+        ParamMap<String, Param<String, Object>> params = new ParamMap<String, Param<String, Object>>();
 
         // add defaults request method
-        params.addParam(new Param<>(RequestKeys.REQUEST_METHOD.getValue(), request.getMethod()));
-        params.addParam(new Param<>(RequestKeys.URI.getValue(), request.getRequestURI()));
-        params.addParam(new Param<>(RequestKeys.PROTOCOL.getValue(), request.getProtocol()));
+        params.addParam(new Param<String, Object>(RequestKeys.REQUEST_METHOD.getValue(), request.getMethod()));
+        params.addParam(new Param<String, Object>(RequestKeys.URI.getValue(), request.getRequestURI()));
+        params.addParam(new Param<String, Object>(RequestKeys.PROTOCOL.getValue(), request.getProtocol()));
 
         try {
             String line;
@@ -97,7 +97,7 @@ public class ServerServlet extends HttpServlet {
             while ((line = reader.readLine()) != null) {
                 postData.append(line);
             }
-            params.addParam(new Param<>(RequestKeys.REQUEST_POST_DATA.getValue(), postData.toString()));
+            params.addParam(new Param<String, Object>(RequestKeys.REQUEST_POST_DATA.getValue(), postData.toString()));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -118,15 +118,15 @@ public class ServerServlet extends HttpServlet {
         }
 
         // add default headers
-        headers.addParam(new Param<>(RequestKeys.HOST.getValue(), domain));
-        headers.addParam(new Param<>(RequestKeys.HOST_NAME.getValue(), domain));
-        headers.addParam(new Param<>(RequestKeys.HOST_PORT.getValue(), port));
-        headers.addParam(new Param<>(RequestKeys.REMOTE_IP.getValue(), getRemoteIpAddress(request)));
+        headers.addParam(new Param<String, Object>(RequestKeys.HOST.getValue(), domain));
+        headers.addParam(new Param<String, Object>(RequestKeys.HOST_NAME.getValue(), domain));
+        headers.addParam(new Param<String, Object>(RequestKeys.HOST_PORT.getValue(), port));
+        headers.addParam(new Param<String, Object>(RequestKeys.REMOTE_IP.getValue(), getRemoteIpAddress(request)));
 
         Enumeration headerKeys = request.getHeaderNames();
         while (headerKeys.hasMoreElements()) {
             String headerKey = String.valueOf(headerKeys.nextElement());
-            headers.addParam(new Param<>(headerKey, request.getHeader(headerKey)));
+            headers.addParam(new Param<String, Object>(headerKey, request.getHeader(headerKey)));
         }
 
         String[] requestParams = request.getQueryString() != null ? request.getQueryString().split("&") : new String[]{};
@@ -136,49 +136,49 @@ public class ServerServlet extends HttpServlet {
 
             paramArr = paramKeyValue.split("(<=)|(%3C=)", 2);
             if (paramArr.length == 2) {
-                params.addParam(new Param<>(paramArr[0], paramArr[1], ParamRelation.LE));
+                params.addParam(new Param<String, Object>(paramArr[0], paramArr[1], ParamRelation.LE));
                 continue;
             }
 
             paramArr = paramKeyValue.split("(>=)|(%3E=)", 2);
             if (paramArr.length == 2) {
-                params.addParam(new Param<>(paramArr[0], paramArr[1], ParamRelation.GE));
+                params.addParam(new Param<String, Object>(paramArr[0], paramArr[1], ParamRelation.GE));
                 continue;
             }
 
             paramArr = paramKeyValue.split("!=", 2);
             if (paramArr.length == 2) {
-                params.addParam(new Param<>(paramArr[0], paramArr[1], ParamRelation.NE));
+                params.addParam(new Param<String, Object>(paramArr[0], paramArr[1], ParamRelation.NE));
                 continue;
             }
 
             paramArr = paramKeyValue.split("=", 2);
             if (paramArr.length == 2) {
-                params.addParam(new Param<>(paramArr[0], paramArr[1], ParamRelation.EQ));
+                params.addParam(new Param<String, Object>(paramArr[0], paramArr[1], ParamRelation.EQ));
                 continue;
             }
 
             paramArr = paramKeyValue.split("-like-", 2);
             if (paramArr.length == 2) {
-                params.addParam(new Param<>(paramArr[0], paramArr[1], ParamRelation.LIKE));
+                params.addParam(new Param<String, Object>(paramArr[0], paramArr[1], ParamRelation.LIKE));
                 continue;
             }
 
             paramArr = paramKeyValue.split("((<)|(%3C))*((<)|(%3C))");
             if (paramArr.length == 3) {
-                params.addParam(new Param<>(paramArr[1], paramArr[0], paramArr[2], ParamRelation.BETWEEN));
+                params.addParam(new Param<String, Object>(paramArr[1], paramArr[0], paramArr[2], ParamRelation.BETWEEN));
                 continue;
             }
 
             paramArr = paramKeyValue.split("(<)|(%3C)", 2);
             if (paramArr.length == 2) {
-                params.addParam(new Param<>(paramArr[0], paramArr[1], ParamRelation.LT));
+                params.addParam(new Param<String, Object>(paramArr[0], paramArr[1], ParamRelation.LT));
                 continue;
             }
 
             paramArr = paramKeyValue.split("(>)|(%3E)", 2);
             if (paramArr.length == 2) {
-                params.addParam(new Param<>(paramArr[0], paramArr[1], ParamRelation.GT));
+                params.addParam(new Param<String, Object>(paramArr[0], paramArr[1], ParamRelation.GT));
             }
 
         }
@@ -199,10 +199,10 @@ public class ServerServlet extends HttpServlet {
             String host = hostParam.getValue().toString();
             String[] hostNamePort = trim(host.split(":"));
             if (hostNamePort.length == 2) {
-                headers.addParam(new Param<>(RequestKeys.HOST_NAME.getValue(), hostNamePort[0]));
-                headers.addParam(new Param<>(RequestKeys.HOST_PORT.getValue(), hostNamePort[1]));
+                headers.addParam(new Param<String, Object>(RequestKeys.HOST_NAME.getValue(), hostNamePort[0]));
+                headers.addParam(new Param<String, Object>(RequestKeys.HOST_PORT.getValue(), hostNamePort[1]));
             } else if (hostNamePort.length == 1) {
-                headers.addParam(new Param<>(RequestKeys.HOST_NAME.getValue(), hostNamePort[0]));
+                headers.addParam(new Param<String, Object>(RequestKeys.HOST_NAME.getValue(), hostNamePort[0]));
             }
         }
 

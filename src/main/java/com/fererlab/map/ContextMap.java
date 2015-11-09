@@ -33,7 +33,7 @@ public class ContextMap {
         if (url != null) {
             try {
                 File contextMapFile = new File(url.getPath() + "/ContextMap.properties");
-                Map<String, String> beans = new HashMap<>();
+                Map<String, String> beans = new HashMap<String, String>();
                 Properties properties = new Properties();
                 properties.load(new FileReader(contextMapFile));
                 for (Object key : properties.keySet()) {

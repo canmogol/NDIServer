@@ -24,6 +24,12 @@ public class ApplicationHandler {
                 applicationName = uriParts[1].trim();
             }
             applicationName = applicationName.startsWith("/") ? applicationName : "/" + applicationName;
+            request.getParams().put(
+                    RequestKeys.APPLICATION_URI.getValue(),
+                    new Param<String, Object>(
+                            RequestKeys.APPLICATION_URI.getValue(),
+                            projectName == null ? applicationName : "/" + projectName + applicationName
+                    ));
 
             // change the request URI for application to handle request correctly
             String currentRequestURI = request.getParams().getValue(RequestKeys.URI.getValue()).toString();
@@ -35,23 +41,16 @@ public class ApplicationHandler {
                     uriStartsWith = projectName == null ? "/" : "/" + projectName;
                 } else {
                     log("will return not found message");
-                    return new Response(new ParamMap<>(), new Session(""), Status.STATUS_NOT_FOUND);
+                    return new Response(new ParamMap<String, Param<String, Object>>(), new Session(""), Status.STATUS_NOT_FOUND);
                 }
             }
 
-            request.getParams().put(
-                    RequestKeys.APPLICATION_URI.getValue(),
-                    new Param<>(
-                            RequestKeys.APPLICATION_URI.getValue(),
-                            projectName == null ? applicationName : "/" + projectName + applicationName
-                    ));
-
-            if (!"/".equals(uriStartsWith) && currentRequestURI.startsWith(uriStartsWith)) {
+            if (currentRequestURI.startsWith(uriStartsWith)) {
                 currentRequestURI = currentRequestURI.substring((uriStartsWith).length());
                 if (currentRequestURI.lastIndexOf("?") != -1) {
                     currentRequestURI = currentRequestURI.substring(0, currentRequestURI.lastIndexOf("?"));
                 }
-                Param<String, Object> param = new Param<>(
+                Param<String, Object> param = new Param<String, Object>(
                         RequestKeys.URI.getValue(),
                         currentRequestURI
                 );

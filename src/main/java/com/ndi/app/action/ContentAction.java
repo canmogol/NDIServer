@@ -17,15 +17,6 @@ public class ContentAction extends BaseAction {
 
     private MimeTypeMap mimeTypeMap = MimeTypeMap.getInstance();
 
-    public Response favicon(Request request) {
-        Param<String, Object> param = new Param<>(
-                RequestKeys.URI.getValue(),
-                "/_/image/favicon.ico"
-        );
-        request.getParams().put(RequestKeys.URI.getValue(), param);
-        return deliver(request);
-    }
-
     public Response deliver(Request request) {
         String requestURI = request.getParams().get(RequestKeys.URI.getValue()).getValue().toString();
         Map.Entry<byte[], String> entry = Cache.getContentIfCached(requestURI);
@@ -37,26 +28,26 @@ public class ContentAction extends BaseAction {
                 content = fileContentHandler.getContent(fileContentHandler.getContentPath(), requestURI);
             } catch (FileNotFoundException e) {
                 return new Response(
-                        new ParamMap<>(),
+                        new ParamMap<String, Param<String, Object>>(),
                         request.getSession(),
                         Status.STATUS_NOT_FOUND
                 );
             }
             String extension = fileContentHandler.getFileExtension();
-            Map<byte[], String> contentAndExtension = new HashMap<>();
+            Map<byte[], String> contentAndExtension = new HashMap<byte[], String>();
             contentAndExtension.put(content, extension);
             entry = contentAndExtension.entrySet().iterator().next();
             Cache.putIfCacheable(requestURI, entry);
         }
         Response response = new Response(
-                new ParamMap<>(),
+                new ParamMap<String, Param<String, Object>>(),
                 request.getSession(),
                 Status.STATUS_OK,
                 entry.getKey()
         );
         response.getHeaders().put(
                 ResponseKeys.RESPONSE_TYPE.getValue(),
-                new Param<>(
+                new Param<String, Object>(
                         ResponseKeys.RESPONSE_TYPE.getValue(),
                         mimeTypeMap.get(entry.getValue())
                 )

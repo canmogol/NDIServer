@@ -61,7 +61,7 @@ public class GAction extends BaseAction {
             if ("db".equalsIgnoreCase(source)) {
                 // could not find the class, will try to find the content from database
                 EM.getEntityManager().clear();
-                ModelAction<GActionModel> modelAction = new ModelAction<>(GActionModel.class);
+                ModelAction<GActionModel> modelAction = new ModelAction<GActionModel>(GActionModel.class);
                 List<GActionModel> list = modelAction.findAll("name", request.get("dynamicClassName"));
                 // found entry at db
                 if (list != null && list.size() > 0) {
@@ -77,7 +77,7 @@ public class GAction extends BaseAction {
                 if (gActionModels != null && gActionModels.size() > 0) {
                     GActionModel gActionModel = gActionModels.get(0);
                     gActionModel.setContent(content);
-                    /*gActionModel = */EM.merge(gActionModel);
+                    gActionModel = EM.merge(gActionModel);
                 } else {
                     GActionModel gActionModel = new GActionModel();
                     gActionModel.setName(request.get("dynamicClassName"));
@@ -92,10 +92,7 @@ public class GAction extends BaseAction {
             // now we have the content of the code so will execute it as if it is a groovy script and return response
             ClassLoader parent = getClass().getClassLoader();
             GroovyClassLoader loader = new GroovyClassLoader(parent);
-            Class clazz = null;
-            if (content != null) {
-                clazz = loader.parseClass(content);
-            }
+            Class clazz = loader.parseClass(content);
             // only for production, objects are singleton, others will reload for every request
             return createGObjectReturnResponse(clazz, request);
         } catch (Exception e) {
@@ -106,7 +103,8 @@ public class GAction extends BaseAction {
 
     private String findSource(Request request) {
         // set the predefined value as 'class'
-        String source = "class";
+        String current = "class";
+        String source = current;
         // check the java execution params for dev or prod values
         RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
         List<String> arguments = runtimeMxBean.getInputArguments();
@@ -121,9 +119,10 @@ public class GAction extends BaseAction {
                 }
             }
         }
-
         // first level is jvm parameter
-        String current = startParameterSource;
+        if (startParameterSource != null) {
+            current = startParameterSource;
+        }
 
         // second is the session
         if (request.getSession().containsKey("Dtarget.source") && request.getSession().get("Dtarget.source") != null) {

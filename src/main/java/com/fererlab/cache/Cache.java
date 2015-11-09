@@ -33,10 +33,10 @@ public class Cache {
     }
 
     public static void create(Map<Object, Object> map) {
-        cacheMap = new ConcurrentHashMap<>();
-        cacheFileExtensions = new ArrayList<>();
-        cacheDirs = new ArrayList<>();
-        cacheFiles = new ArrayList<>();
+        cacheMap = new ConcurrentHashMap<Object, Object>();
+        cacheFileExtensions = new ArrayList<String>();
+        cacheDirs = new ArrayList<String>();
+        cacheFiles = new ArrayList<String>();
 
         for (Object key : map.keySet()) {
             if (String.valueOf(key).startsWith("cache.")) {
@@ -58,21 +58,11 @@ public class Cache {
 
     @SuppressWarnings("unchecked")
     public static boolean putIfCacheable(String key, Object value) {
-        if (key != null && value != null) {
-            String extension = null;
-            String dir = null;
-            String[] keySplit = key.split(".");
-            if (keySplit.length > 0) {
-                extension = keySplit[keySplit.length - 1];
-            }
-            keySplit = key.split("/");
-            if (keySplit.length > 0) {
-                dir = key.substring(0, key.length() - keySplit[keySplit.length - 1].length());
-            }
-            if ((cacheFiles.contains(key) || cacheDirs.contains(dir) || cacheFileExtensions.contains(extension))) {
-                cacheMap.put(key, value);
-                return true;
-            }
+        if ((key != null && value != null) &&
+                (cacheFiles.contains(key) || cacheDirs.contains(key) || cacheFileExtensions.contains(key))
+                ) {
+            cacheMap.put(key, value);
+            return true;
         }
         return false;
     }
